@@ -1,4 +1,4 @@
-o(define connection)
+(define connection)
 
 (define (run port)
   (let ((socket (open-tcp-server-socket port)))
@@ -19,9 +19,8 @@ o(define connection)
     (accept-loop socket)))
 
 (define (handle-request client request-path)
-  (display (file-exists? request-path))
   (cond ((string=? "" request-path) (handle-request client "index.html"))
-	((not (file-exists? request-path)) (display "HTTP/1.0 404 File Not Found" client))
+	((not (file-exists? request-path)) (display "HTTP/1.0 404 \n\nFile Not Found (404)" client))
 	(else (write-response client request-path))))
 
 (define (read-total-request client response)
@@ -41,7 +40,7 @@ o(define connection)
 
 (define (write-response client request-path)
   (begin
-     (display "HTTP/1.0 200 OK\n\n" client)
+    (display "HTTP/1.0 200 OK\n\n" client)
      (send-file client request-path)))
 
 (define (send-file client filename)
