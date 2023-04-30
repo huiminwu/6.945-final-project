@@ -1,4 +1,8 @@
+(load "sdf/manager/load")
+(manage 'new 'user-defined-types)
+
 (define connection)
+(define game-in-session #f)
 
 (define (run port)
   (let ((socket (open-tcp-server-socket port)))
@@ -50,7 +54,10 @@
 	  '()
 	  (begin
 	    (display ch client)
-	    (loop (read-char file)))))))
+	    (loop (read-char file))))))
+  (if (equal? "index.html" filename)
+      (begin (set! game-in-session #t)
+      (start-web-adventure 'test client))))
 
 (run 1234)
 
