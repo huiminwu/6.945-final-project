@@ -50,8 +50,10 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (set! all-places (create-mit))
   (set! heaven (create-place 'heaven))
   (set! all-people (create-people all-places))
-  (set! my-avatar (create-avatar my-name (random-choice all-places)))
-  (whats-here-web client))
+  (set! all-avatars '())
+  (start-adventure my-name)
+  #|(set! my-avatar (create-avatar my-name (random-choice all-places)))|#
+  (whats-here-web client my-name))
 
 (define (get-all-places)
   all-places)
@@ -108,8 +110,8 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (look-around (find-object-by-name avatar-name all-avatars))
   'done)
 
-(define (whats-here-web client)
-  (look-around-web my-avatar client)
+(define (whats-here-web client my-name)
+  (look-around-web (find-object-by-name my-name all-avatars) client)
   'done)
 
 (define (say avatar-name . message)

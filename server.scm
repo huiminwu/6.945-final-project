@@ -1,6 +1,6 @@
 (load "sdf/manager/load")
 (manage 'new 'user-defined-types)
-
+(begin
 (define connection)
 (define game-in-session #f)
 
@@ -28,7 +28,8 @@
 	(else (write-response client request-path))))
 
 (define (read-total-request client response)
-    (let ((line (read-line client)))
+  (let ((line (read-line client)))
+    (display (string-append response line))
       (if (string=? "" line)
 	  response
 	  (read-total-request client (string-append response line)))))
@@ -57,8 +58,8 @@
 	    (loop (read-char file))))))
   (if (equal? "index.html" filename)
       (begin (set! game-in-session #t)
-      (start-web-adventure 'test client))))
-
+	     (start-web-adventure 'test client))))
+)
 (run 1234)
 
 #| Navigate to localhost:1234 |#
