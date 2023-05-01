@@ -341,7 +341,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (send-message-web! message client))
 
 (define (say! person message)
-  (narrate! (append (list person "says:") message)
+  (tell! (append (list person "says:") message)
             person))
 
 (define (announce! message)

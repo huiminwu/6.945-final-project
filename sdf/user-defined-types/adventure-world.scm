@@ -27,17 +27,23 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define all-places)
 (define heaven)
 (define all-people)
-(define my-avatar)
+(define all-avatars '())
 
-(define (start-adventure my-name)
+(define (start-new-world)
   (set! the-clock (make-clock))
   (set! all-places (create-mit))
   (set! heaven (create-place 'heaven))
   (set! all-people (create-people all-places))
-  (set! my-avatar
-        (create-avatar my-name
-                       (random-choice all-places)))
-  (whats-here))
+  (set! all-avatars '()))
+
+(define (start-adventure my-name)
+  (if (false? (find-object-by-name my-name all-avatars))
+      (let ((avatar-obj (create-avatar my-name (random-choice all-places))))
+	(set! all-avatars (append! all-avatars (list avatar-obj)))
+	(narrate! (list "Welcome to MIT" my-name "\n") avatar-obj)
+	(whats-here my-name))
+      (display "This avatar already exists. Please try again.")))
+
 
 (define (start-web-adventure my-name client)
   (set! the-clock (make-clock))
@@ -58,35 +64,39 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; User interface
 
-(define (go direction)
-  (let ((exit
-         (find-exit-in-direction direction
-                                 (get-location my-avatar))))
-    (if exit
-        (take-exit! exit my-avatar)
-        (narrate! (list "No exit in" direction "direction")
-                  my-avatar)))
-  'done)
+(define (go direction name)
+  (let ((my-avatar (find-object-by-name name all-avatars)))
+    (let ((exit
+	   (find-exit-in-direction direction
+				   (get-location my-avatar))))
+      (if exit
+	  (take-exit! exit my-avatar)
+	  (narrate! (list "No exit in" direction "direction")
+		    my-avatar))))
+    'done)
 
-(define (take-thing name)
-  (let ((thing (find-thing name (here))))
+(define (take-thing name avatar-name)
+  (let ((thing (find-thing name (here avatar-name) avatar-name))
+	      (my-avatar (find-object-by-name avatar-name all-avatars)))
     (if thing
         (take-thing! thing my-avatar)))
   'done)
 
-(define (drop-thing name)
-  (let ((thing (find-thing name my-avatar)))
+(define (drop-thing name avatar-name)
+  (let* ((my-avatar (find-object-by-name avatar-name all-avatars))
+	       (thing (find-thing name my-avatar avatar-name)))
     (if thing
         (drop-thing! thing my-avatar)))
   'done)
 
-(define (look-in-bag #!optional person-name)
-  (let ((person
+(define (look-in-bag avatar-name #!optional person-name)
+  (let* ((my-avatar (find-object-by-name avatar-name all-avatars))
+	       (person
          (if (default-object? person-name)
              my-avatar
-             (find-person person-name))))
+             (find-person person-name avatar-name))))
     (if person
-        (tell! (let ((referent (local-possessive person))
+        (tell! (let ((referent (local-possessive person avatar-name))
                      (things (get-things person)))
                  (if (n:pair? things)
                      (cons* referent "bag contains" things)
@@ -94,20 +104,21 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
                my-avatar)))
   'done)
 
-(define (whats-here)
-  (look-around my-avatar)
+(define (whats-here avatar-name)
+  (look-around (find-object-by-name avatar-name all-avatars))
   'done)
 
 (define (whats-here-web client)
   (look-around-web my-avatar client)
   'done)
 
-(define (say . message)
-  (say! my-avatar message)
+(define (say avatar-name . message)
+  (let ((my-avatar (find-object-by-name avatar-name all-avatars)))
+    (say! my-avatar message))
   'done)
 
-(define (tell person-name . message)
-  (tell! message (find-person person-name))
+(define (tell avatar-name person-name . message)
+  (tell! message (find-person person-name avatar-name))
   'done)
 
 (define (hang-out ticks)
@@ -118,27 +129,28 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Support for UI
 
-(define (here)
-  (get-location my-avatar))
+(define (here avatar-name)
+  (get-location (find-object-by-name avatar-name all-avatars)))
 
-(define (find-person name)
-  (let ((person
+(define (find-person name avatar-name)
+  (let* ((my-avatar (find-object-by-name avatar-name all-avatars))
+	       (person
          (find-object-by-name name (people-here my-avatar))))
     (if (not person)
         (tell! (list "There is no one called" name "here")
                my-avatar))
     person))
 
-(define (find-thing name person-or-place)
+(define (find-thing name person-or-place avatar-name)
   (let ((thing
          (find-object-by-name
           name
-          (person-or-place-things person-or-place))))
+          (person-or-place-things person-or-place avatar-name))))
     (if (not thing)
         (tell! (cons* "There is nothing called"
                       name
-                      (person-or-place-name person-or-place))
-               my-avatar))
+                      (person-or-place-name person-or-place avatar-name))
+               (find-object-by-name avatar-name all-avatars)))
     thing))
 
 (define (person-or-place-things person-or-place)
@@ -146,13 +158,13 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
       (all-things-in-place person-or-place)
       (get-things person-or-place)))
 
-(define (person-or-place-name person-or-place)
+(define (person-or-place-name person-or-place avatar-name)
   (if (place? person-or-place)
       '("here")
-      (list "in" (local-possessive person-or-place) "bag")))
+      (list "in" (local-possessive person-or-place avatar-name) "bag")))
 
-(define (local-possessive person)
-  (if (eqv? person my-avatar)
+(define (local-possessive person avatar-name)
+  (if (eqv? person (find-object-by-name avatar-name all-avatars))
       "Your"
       (possessive person)))
 

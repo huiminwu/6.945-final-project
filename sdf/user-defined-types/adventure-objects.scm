@@ -233,11 +233,12 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (match-args person?)
   (lambda (super person)
     (super person)
-    (narrate! (list person "enters" (get-location person))
+    (tell! (list person "enters" (get-location person))
               person)
     (let ((people (people-here person)))
       (if (n:pair? people)
-          (say! person (cons "Hi" people))))))
+          (tell! (append (list person "says:") (cons "Hi" people))
+            person)))))
 
 (define (when-alive callback)
   (lambda (person)
@@ -426,10 +427,10 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (if (flip-coin (get-hunger troll))
       (let ((people (people-here troll)))
         (if (n:null? people)
-            (narrate! (list (possessive troll) "belly rumbles")
+            (tell! (list (possessive troll) "belly rumbles")
                       troll)
             (let ((victim (random-choice people)))
-              (narrate! (list troll "takes a bite out of" victim)
+              (tell! (list troll "takes a bite out of" victim)
                         troll)
               (suffer! (random-number 3) victim))))))
 
@@ -553,17 +554,17 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
                           mobile-thing)
                     actor))
             ((eqv? actor former-holder)
-             (narrate! (list actor
+             (tell! (list actor
                              "gives" mobile-thing
                              "to" new-holder)
                        actor))
             ((eqv? actor new-holder)
-             (narrate! (list actor
+             (tell! (list actor
                              "takes" mobile-thing
                              "from" former-holder)
                        actor))
             (else
-             (narrate! (list actor
+             (tell! (list actor
                              "takes" mobile-thing
                              "from" former-holder
                              "and gives it to" new-holder)
@@ -581,11 +582,11 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (lambda (mobile-thing from to actor)
     (let ((new-holder (get-holder to)))
       (cond ((eqv? actor new-holder)
-             (narrate! (list actor
+             (tell! (list actor
                              "picks up" mobile-thing)
                        actor))
             (else
-             (narrate! (list actor
+             (tell! (list actor
                              "picks up" mobile-thing
                              "and gives it to" new-holder)
                        actor)))
@@ -599,11 +600,11 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (lambda (mobile-thing from to actor)
     (let ((former-holder (get-holder from)))
       (cond ((eqv? actor former-holder)
-             (narrate! (list actor
+             (tell! (list actor
                              "drops" mobile-thing)
                        actor))
             (else
-             (narrate! (list actor
+             (tell! (list actor
                              "takes" mobile-thing
                              "from" former-holder
                              "and drops it")
@@ -638,7 +639,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
                           "to" to)
                     actor))
             ((eqv? person actor)
-             (narrate! (list person "leaves via the"
+             (tell! (list person "leaves via the"
                              (get-direction exit) "exit")
                        from)
              (move-internal! person from to))
