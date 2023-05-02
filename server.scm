@@ -12,10 +12,19 @@
 (define (close-connection)
   (close-tcp-server-socket connection))
 
+(define (find-content-length request-string)
+  (let ((content-length-index (string-search-forward "Content-Length: " request-string))
+	(cache-control-index (string-search-forward "Cache-Control: " request-string)))
+    (substring request-string (+ content-length-index 16) cache-control-index)))
+
 (define (accept-loop socket)
   (let* ((client (tcp-server-connection-accept socket #t #f))
 	(request (read-total-request client ""))
 	(request-path (acquire-GET-path request)))
+    (if (false? (string-search-forward "GET" request))
+	(let ((content-length (string->number (find-content-length request))))
+	  (display "\nPOST Request body: \n")
+	  (display (read-string content-length client))))
     (display request-path)
     (newline)
     (handle-request client request-path)
@@ -29,7 +38,6 @@
 
 (define (read-total-request client response)
   (let ((line (read-line client)))
-    (display (string-append response line))
       (if (string=? "" line)
 	  response
 	  (read-total-request client (string-append response line)))))
@@ -38,7 +46,6 @@
   (let* ((slash-index (string-search-forward "/" request-string))
 	 (space-index (substring-search-forward " " request-string slash-index (string-length request-string)))
 	 (question-index (substring-search-forward "?" request-string slash-index space-index)))
-    (display question-index)
     (if question-index
 	(substring request-string (+ slash-index 1) question-index)
 	(substring request-string (+ slash-index 1) space-index))))
