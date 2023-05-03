@@ -372,18 +372,6 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
                     (display-item item port))
                   (cdr message)))))
 
-(define (display-message-web message client)
-  (guarantee message? message 'display-message)
-  (if (pair? message)
-      (begin
-	(fresh-line client)
-	(display-item (car message) client)
-	(for-each (lambda (item)
-		    (display "\n" client)
-		    (display-item item client))
-		  (cdr message)))))
-		    
-
 (define (display-item item port)
   (display (if (object? item) (get-name item) item) port))
 
@@ -420,7 +408,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define-generic-procedure-handler send-message-web!
   (match-args message? (lambda (x) #t))
   (lambda (message client)
-    (display-message-web message client)))
+    (display-message message client)))
 
 
 ;;; Clock

@@ -77,6 +77,18 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 		    my-avatar))))
     'done)
 
+(define (go-web direction name client)
+  (let ((my-avatar (find-object-by-name name all-avatars)))
+    (let ((exit
+	   (find-exit-in-direction direction
+				   (get-location my-avatar))))
+      (if exit
+	  (take-exit-web! exit my-avatar client)
+	  (tell-web! (list "No exit in" direction "direction")
+		     my-avatar
+		     client))))
+    'done)
+
 (define (take-thing name avatar-name)
   (let ((thing (find-thing name (here avatar-name) avatar-name))
 	      (my-avatar (find-object-by-name avatar-name all-avatars)))

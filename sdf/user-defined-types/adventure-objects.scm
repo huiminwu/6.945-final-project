@@ -508,8 +508,8 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 		     (map get-direction exits))
 	       ("There are no exits..."
 		"you are dead and gone to heaven!")))
-	     avatar client))
- 
+	     avatar client)) 
+
 ;;; Motion
 
 (define (take-thing! thing person)
@@ -517,6 +517,13 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 
 (define (drop-thing! thing person)
   (move! thing (get-location person) person))
+
+(define (take-exit-web! exit mobile-thing client)
+  (generic-move-web! mobile-thing
+                 (get-from exit)
+                 (get-to exit)
+                 mobile-thing
+                 client))
 
 (define (take-exit! exit mobile-thing)
   (generic-move! mobile-thing
@@ -532,6 +539,9 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 
 (define generic-move!
   (most-specific-generic-procedure 'generic-move! 4 #f))
+
+(define generic-move-web!
+  (most-specific-generic-procedure 'generic-move-web! 5 #f))
 
 ;;; TODO: guarantee that THING is in FROM.
 ;;; Also that the people involved are local.
@@ -649,6 +659,134 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
                           "to move!")
                     actor))))))
 
+;; coderef: generic-move-web:default
+(define-generic-procedure-handler generic-move-web!
+  (match-args thing? container? container? person? port?)
+  (lambda (thing from to actor port)
+    (tell-web! (list thing "is not movable")
+               actor
+	       port)))
+
+;; coderef: generic-move:steal
+(define-generic-procedure-handler generic-move-web!
+  (match-args mobile-thing? bag? bag? person? port?)
+  (lambda (mobile-thing from to actor port)
+    (let ((former-holder (get-holder from))
+          (new-holder (get-holder to)))
+      (cond ((eqv? from to)
+             (tell-web! (list new-holder "is already carrying"
+                          mobile-thing)
+			actor
+			port))
+            ((eqv? actor former-holder)
+             (tell-web! (list actor
+                             "gives" mobile-thing
+                             "to" new-holder)
+			actor
+			port))
+            ((eqv? actor new-holder)
+             (tell-web! (list actor
+                             "takes" mobile-thing
+                             "from" former-holder)
+			actor
+			port))
+            (else
+             (tell-web! (list actor
+                             "takes" mobile-thing
+                             "from" former-holder
+                             "and gives it to" new-holder)
+			actor
+			port)))
+      (if (not (eqv? actor former-holder))
+          (say-web! former-holder (list "Yaaaah! I am upset!") port))
+      (if (not (eqv? actor new-holder))
+          (say-web! new-holder (list "Whoa! Where'd you get this?") port))
+      (if (not (eqv? from to))
+          (move-internal-web! mobile-thing from to port)))))
+
+;; coderef: generic-move-web:take
+(define-generic-procedure-handler generic-move-web!
+  (match-args mobile-thing? place? bag? person? port?)
+  (lambda (mobile-thing from to actor port)
+    (let ((new-holder (get-holder to)))
+      (cond ((eqv? actor new-holder)
+             (tell-web! (list actor
+                             "picks up" mobile-thing)
+			actor
+			port))
+            (else
+             (tell-web! (list actor
+                             "picks up" mobile-thing
+                             "and gives it to" new-holder)
+			actor
+			port)))
+      (if (not (eqv? actor new-holder))
+          (say-web! new-holder (list "Whoa! Thanks, dude!") port))
+      (move-internal-web! mobile-thing from to port))))
+
+;; coderef: generic-move-web:drop
+(define-generic-procedure-handler generic-move-web!
+  (match-args mobile-thing? bag? place? person? port?)
+  (lambda (mobile-thing from to actor port)
+    (let ((former-holder (get-holder from)))
+      (cond ((eqv? actor former-holder)
+             (tell-web! (list actor
+                             "drops" mobile-thing)
+			actor
+			port))
+            (else
+             (tell-web! (list actor
+                             "takes" mobile-thing
+                             "from" former-holder
+                             "and drops it")
+			actor
+			port)))
+      (if (not (eqv? actor former-holder))
+          (say-web! former-holder
+                    (list "What did you do that for?")
+		    port))
+      (move-internal-web! mobile-thing from to port))))
+
+(define-generic-procedure-handler generic-move-web!
+  (match-args mobile-thing? place? place? person? port?)
+  (lambda (mobile-thing from to actor port)
+    (cond ((eqv? from to)
+           (tell-web! (list mobile-thing "is already in" from)
+                      actor
+		      port))
+          (else
+           (tell-web! (list "How do you propose to move"
+                        mobile-thing
+                        "without carrying it?")
+                      actor
+		      port)))))
+
+;; coderef: generic-move-web:person
+(define-generic-procedure-handler generic-move-web!
+  (match-args person? place? place? person? port?)
+  (lambda (person from to actor port)
+    (let ((exit (find-exit from to)))
+      (cond ((or (eqv? from (get-heaven))
+                 (eqv? to (get-heaven)))
+             (move-internal-web! person from to port))
+            ((not exit)
+             (tell-web! (list "There is no exit from" from
+                          "to" to)
+			actor
+			port))
+            ((eqv? person actor)
+             (tell-web! (list person "leaves via the"
+                             (get-direction exit) "exit")
+			from
+			port)
+             (move-internal-web! person from to port))
+            (else
+             (tell-web! (list "You can't force"
+                          person
+                          "to move!")
+			actor
+			port))))))
+
 (define (find-exit from to)
   (find (lambda (exit)
           (and (eqv? (get-from exit) from)
@@ -656,6 +794,13 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
         (get-exits from)))
 
 (define (move-internal! mobile-thing from to)
+  (leave-place! mobile-thing)
+  (remove-thing! from mobile-thing)
+  (set-location! mobile-thing to)
+  (add-thing! to mobile-thing)
+  (enter-place! mobile-thing))
+
+(define (move-internal-web! mobile-thing from to client)
   (leave-place! mobile-thing)
   (remove-thing! from mobile-thing)
   (set-location! mobile-thing to)
