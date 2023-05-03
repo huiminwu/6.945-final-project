@@ -337,7 +337,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (if debug-output
       (send-message! message debug-output)))
 
-(define (tell-web! message person client)
+(define (tell-web! message client)
   (send-message-web! message client))
 
 (define (say! person message)

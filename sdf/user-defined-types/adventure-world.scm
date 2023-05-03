@@ -29,22 +29,25 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define all-people)
 (define all-avatars '())
 
-(define (start-new-world)
+(define (start-web-world)
   (set! the-clock (make-clock))
   (set! all-places (create-mit))
   (set! heaven (create-place 'heaven))
   (set! all-people (create-people all-places))
   (set! all-avatars '()))
 
-(define (start-adventure my-name)
+(define (start-web-adventure my-name client)
   (if (false? (find-object-by-name my-name all-avatars))
       (let ((avatar-obj (create-avatar my-name (random-choice all-places))))
 	(set! all-avatars (append! all-avatars (list avatar-obj)))
-	(narrate! (list "Welcome to MIT" my-name "\n") avatar-obj)
-	(whats-here my-name))
-      (display "This avatar already exists. Please try again.")))
+	(tell-web! (list "Welcome to MIT" my-name "\n") client)
+	(whats-here-web client my-name))
+      (tell-web! (list "This avatar already exists. Please try again.") client)))
+ 
+(define (avatar-exists name)
+  (not (false? (find-object-by-name name all-avatars))))
 
-
+#|
 (define (start-web-adventure my-name client)
   (set! the-clock (make-clock))
   (set! all-places (create-mit))
@@ -54,7 +57,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (start-adventure my-name)
   #|(set! my-avatar (create-avatar my-name (random-choice all-places)))|#
   (whats-here-web client my-name))
-
+|#
 (define (get-all-places)
   all-places)
 
@@ -78,14 +81,13 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
     'done)
 
 (define (go-web direction name client)
-  (let ((my-avatar (find-object-by-name name all-avatars)))
+   (let ((my-avatar (find-object-by-name name all-avatars)))
     (let ((exit
 	   (find-exit-in-direction direction
 				   (get-location my-avatar))))
       (if exit
 	  (take-exit-web! exit my-avatar client)
 	  (tell-web! (list "No exit in" direction "direction")
-		     my-avatar
 		     client))))
     'done)
 

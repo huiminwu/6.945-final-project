@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html>
 <body>
-    <h1> Other page </h1>
+  <h1> Other page </h1>
+  <iframe name="empty" styl="display:none;"></iframe>
+<h4> Actions: </h4>
+<form target="empty" method="post">
+  <label for="go-web"> Go :</label>
+  <select id="go-web" name="go-web" size="4">
+    <option value="north">North</option>
+    <option value="south">South</option>
+    <option value="east">East</option>
+    <option value="west">West</option>
+    <option value="up">Up</option>
+    <option value="down">Down</option>
+    <option value="skew">Skew</option>
+  </select><br><br>
+  <input type="submit" />
+</form>
+
 </body>
 </html>

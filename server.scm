@@ -23,24 +23,15 @@
 (define (accept-loop socket)
   (let* ((client (tcp-server-connection-accept socket #t #f))
 	 (request (read-total-request client ""))
-	 (request-path (acquire-GET-path request)))
-    (if (post-request? request)
-	(let* ((content-length (string->number (find-content-length request)))
-	       (post-body (read-string content-length client))
-	       #|parse direction|#)
-	  (handle-request client "index.html")
-	  (go-web (string->symbol "down") 'test client))
-	(let ((request-path (acquire-GET-path request)))
-	  (display request-path)
-	  (newline)
-	  (handle-request client request-path)))
+	 (request-path (acquire-GET-file request)))
+    (handle-request client request-path request)
     (close-port client)
     (accept-loop socket)))
 
-(define (handle-request client request-path)
-  (cond ((string=? "" request-path) (handle-request client "index.html"))
-	((not (file-exists? request-path)) (display "HTTP/1.0 404 \n\nFile Not Found (404)" client))
-	(else (write-response client request-path))))
+(define (handle-request client request-file request)
+  (cond ((string=? "" request-file) (handle-request client "index.html" request))
+	((not (file-exists? request-file)) (display "HTTP/1.0 404 \n\nFile Not Found (404)" client))
+	(else (write-response client request-file request))))
 
 (define (read-total-request client response)
   (let ((line (read-line client)))
@@ -48,7 +39,16 @@
 	  response
 	  (read-total-request client (string-append response line)))))
 
-(define (acquire-GET-path request-string)
+(define (acquire-GET-name request-string)
+  (let* ((name-index (substring-search-forward "name=" request-string))
+	 (slash-index (string-search-forward "/" request-string))
+	 (space-index (substring-search-forward " " request-string name-index (string-length request-string))))
+    (if name-index
+	(if space-index
+	    (substring request-string (+ name-index 5) space-index)
+	    (substring request-string (+ name-index 5))))))
+
+(define (acquire-GET-file request-string)
   (let* ((slash-index (string-search-forward "/" request-string))
 	 (space-index (substring-search-forward " " request-string slash-index (string-length request-string)))
 	 (question-index (substring-search-forward "?" request-string slash-index space-index)))
@@ -56,22 +56,38 @@
 	(substring request-string (+ slash-index 1) question-index)
 	(substring request-string (+ slash-index 1) space-index))))
 
-(define (write-response client request-path)
+(define (acquire-GET-path request-string)
+  (let* ((slash-index (string-search-forward "/" request-string))
+	 (space-index (substring-search-forward " " request-string slash-index (string-length request-string))))
+    (substring request-string (+ slash-index 1) space-index)))
+
+(define (write-response client request-path request)
   (begin
     (display "HTTP/1.0 200 OK\n\n" client)
-     (send-file client request-path)))
+    (send-file client request-path request)))
 
-(define (send-file client filename)
-  (let ((file (open-input-file filename)))
+(define (send-file client filename request)
+   (let ((file (open-input-file filename)))
     (let loop ((ch (read-char file)))
       (if (eof-object? ch)
 	  '()
 	  (begin
 	    (display ch client)
 	    (loop (read-char file))))))
-  (if (equal? "index.html" filename)
+  (if (not game-in-session) ; handle starting a game
       (begin (set! game-in-session #t)
-	     (start-web-adventure 'test client))))
+	     (start-web-world)))
+  (if (not (false? (string-search-forward "name" request))) ; handle new avatar
+      (let ((name (string->symbol (acquire-GET-name request))))
+	(if (not (avatar-exists name))
+   	    (start-web-adventure name client))))
+  (if (post-request? request) ; handle movement (ideally this is a new function
+      (let* ((content-length (string->number (find-content-length request)))
+	     (post-body (read-string content-length client))
+	     (go-web-index (string-search-forward "go-web=" post-body)))
+	(if (not (false? go-web-index))
+	    (let ((direction (substring post-body (+ go-web-index 7))))
+	      (go-web (string->symbol direction) (string->symbol (acquire-GET-name request)) client))))))
 )
 (run 1234)
 
