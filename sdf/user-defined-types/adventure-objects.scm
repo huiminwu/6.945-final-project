@@ -252,7 +252,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
               person)
     (let ((people (people-here person)))
       (if (n:pair? people)
-          (tell! (append (list person "says:") (cons "Hi" people))
+          (tell-web! (append (list person "says:") (cons "Hi" people))
             person)))))
 
 (define (when-alive callback)
@@ -453,24 +453,34 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Avatars
 
-(define avatar:screen
-  (make-property 'screen
-                 'predicate screen?))
+(define avatar:port
+  (make-property 'port
+                 'predicate port?))
+
+(define avatar:log
+  (make-property 'log
+		 'predicate (lambda (x) (string? x))))
 
 (define avatar?
-  (make-type 'avatar (list avatar:screen)))
+  (make-type 'avatar (list avatar:port avatar:log)))
 (set-predicate<=! avatar? person?)
 
 (define make-avatar
   (type-instantiator avatar?))
 
-(define get-screen
-  (property-getter avatar:screen avatar?))
+(define get-port
+  (property-getter avatar:port avatar?))
+
+(define get-log
+  (property-getter avatar:log avatar?))
+
+(define set-log!
+  (property-setter avatar:log avatar? string?))
 
 (define-generic-procedure-handler send-message!
   (match-args message? avatar?)
   (lambda (message avatar)
-    (send-message! message (get-screen avatar))))
+    (send-message! message (get-port avatar))))
 
 (define-generic-procedure-handler enter-place!
   (match-args avatar?)
@@ -480,10 +490,10 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
     (tick! (get-clock))))
 
 (define-generic-procedure-handler enter-place-web!
-  (match-args avatar? port?)
-  (lambda (super avatar port)
+  (match-args avatar?)
+  (lambda (super avatar)
     (super avatar)
-    (look-around-web avatar port)
+    (look-around-web avatar)
     (tick! (get-clock))))
 
 
@@ -512,26 +522,26 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
                  "you are dead and gone to heaven!")))
          avatar))
 
-(define (look-around-web avatar client)
-  (tell-web! (list "You are in" (get-location avatar)) client)
+(define (look-around-web avatar)
+  (tell-web! (list "You are in" (get-location avatar)) avatar)
   (let ((my-things (get-things avatar)))
     (if (n:pair? my-things)
-	(tell-web! (cons "Your bag contains:" my-things) client)))
+	(tell-web! (cons "Your bag contains:" my-things) avatar)))
   (let ((things (append (things-here avatar)
 			(people-here avatar))))
     (if (n:pair? things)
 	(tell-web! (cons "You see here:" things)
-		   client)))
+		   avatar)))
   (let ((vistas (vistas-here avatar)))
     (if (n:pair? vistas)
-	(tell-web! (cons "You can see:" vistas) client)))
+	(tell-web! (cons "You can see:" vistas) avatar)))
   (tell-web! (let ((exits (exits-here avatar)))
 	       (if (n:pair? exits)
 	       (cons "You can exit:"
 		     (map get-direction exits))
 	       ("There are no exits..."
 		"you are dead and gone to heaven!")))
-	     client)) 
+	     avatar)) 
 
 ;;; Motion
 
@@ -541,12 +551,11 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define (drop-thing! thing person)
   (move! thing (get-location person) person))
 
-(define (take-exit-web! exit mobile-thing client)
+(define (take-exit-web! exit mobile-thing)
   (generic-move-web! mobile-thing
                  (get-from exit)
                  (get-to exit)
-                 mobile-thing
-                 client))
+                 mobile-thing))
 
 (define (take-exit! exit mobile-thing)
   (generic-move! mobile-thing
@@ -564,7 +573,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (most-specific-generic-procedure 'generic-move! 4 #f))
 
 (define generic-move-web!
-  (most-specific-generic-procedure 'generic-move-web! 5 #f))
+  (most-specific-generic-procedure 'generic-move-web! 4 #f))
 
 ;;; TODO: guarantee that THING is in FROM.
 ;;; Also that the people involved are local.
@@ -684,117 +693,117 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 
 ;; coderef: generic-move-web:default
 (define-generic-procedure-handler generic-move-web!
-  (match-args thing? container? container? person? port?)
-  (lambda (thing from to actor port)
+  (match-args thing? container? container? person?)
+  (lambda (thing from to actor)
     (tell-web! (list thing "is not movable")
-               port)))
+               actor)))
 
 ;; coderef: generic-move:steal
 (define-generic-procedure-handler generic-move-web!
-  (match-args mobile-thing? bag? bag? person? port?)
-  (lambda (mobile-thing from to actor port)
+  (match-args mobile-thing? bag? bag? person?)
+  (lambda (mobile-thing from to actor)
     (let ((former-holder (get-holder from))
           (new-holder (get-holder to)))
       (cond ((eqv? from to)
              (tell-web! (list new-holder "is already carrying"
                           mobile-thing)
-			port))
+			actor))
             ((eqv? actor former-holder)
              (tell-web! (list actor
                              "gives" mobile-thing
                              "to" new-holder)
-			port))
+			actor))
             ((eqv? actor new-holder)
              (tell-web! (list actor
                              "takes" mobile-thing
                              "from" former-holder)
-			port))
+			actor))
             (else
              (tell-web! (list actor
                              "takes" mobile-thing
                              "from" former-holder
                              "and gives it to" new-holder)
-			port)))
+			actor)))
       (if (not (eqv? actor former-holder))
-          (say-web! former-holder (list "Yaaaah! I am upset!") port))
+          (say-web! former-holder (list "Yaaaah! I am upset!") actor))
       (if (not (eqv? actor new-holder))
-          (say-web! new-holder (list "Whoa! Where'd you get this?") port))
+          (say-web! new-holder (list "Whoa! Where'd you get this?") actor))
       (if (not (eqv? from to))
-          (move-internal-web! mobile-thing from to port)))))
+          (move-internal-web! mobile-thing from to actor)))))
 
 ;; coderef: generic-move-web:take
 (define-generic-procedure-handler generic-move-web!
-  (match-args mobile-thing? place? bag? person? port?)
-  (lambda (mobile-thing from to actor port)
+  (match-args mobile-thing? place? bag? person?)
+  (lambda (mobile-thing from to actor)
     (let ((new-holder (get-holder to)))
       (cond ((eqv? actor new-holder)
              (tell-web! (list actor
                              "picks up" mobile-thing)
-			port))
+			actor))
             (else
              (tell-web! (list actor
                              "picks up" mobile-thing
                              "and gives it to" new-holder)
-			port)))
+			actor)))
       (if (not (eqv? actor new-holder))
-          (say-web! new-holder (list "Whoa! Thanks, dude!") port))
-      (move-internal-web! mobile-thing from to port))))
+          (say-web! new-holder (list "Whoa! Thanks, dude!") actor))
+      (move-internal-web! mobile-thing from to actor))))
 
 ;; coderef: generic-move-web:drop
 (define-generic-procedure-handler generic-move-web!
-  (match-args mobile-thing? bag? place? person? port?)
-  (lambda (mobile-thing from to actor port)
+  (match-args mobile-thing? bag? place? person?)
+  (lambda (mobile-thing from to actor)
     (let ((former-holder (get-holder from)))
       (cond ((eqv? actor former-holder)
              (tell-web! (list actor
                              "drops" mobile-thing)
-			port))
+			actor))
             (else
              (tell-web! (list actor
                              "takes" mobile-thing
                              "from" former-holder
                              "and drops it")
-			port)))
+			actor)))
       (if (not (eqv? actor former-holder))
           (say-web! former-holder
                     (list "What did you do that for?")
-		    port))
-      (move-internal-web! mobile-thing from to port))))
+		    actor))
+      (move-internal-web! mobile-thing from to actor))))
 
 (define-generic-procedure-handler generic-move-web!
-  (match-args mobile-thing? place? place? person? port?)
-  (lambda (mobile-thing from to actor port)
+  (match-args mobile-thing? place? place? person?)
+  (lambda (mobile-thing from to actor)
     (cond ((eqv? from to)
            (tell-web! (list mobile-thing "is already in" from)
-		      port))
+		      actor))
           (else
            (tell-web! (list "How do you propose to move"
                         mobile-thing
                         "without carrying it?")
-		      port)))))
+		      actor)))))
 
 ;; coderef: generic-move-web:person
 (define-generic-procedure-handler generic-move-web!
-  (match-args person? place? place? person? port?)
-  (lambda (person from to actor port)
+  (match-args person? place? place? person?)
+  (lambda (person from to actor)
     (let ((exit (find-exit from to)))
       (cond ((or (eqv? from (get-heaven))
                  (eqv? to (get-heaven)))
-             (move-internal-web! person from to port))
+             (move-internal-web! person from to person))
             ((not exit)
              (tell-web! (list "There is no exit from" from
                           "to" to)
-			port))
+			actor))
             ((eqv? person actor)
              (tell-web! (list person "leaves via the"
                              (get-direction exit) "exit")
-			port)
-             (move-internal-web! person from to port))
+			actor)
+             (move-internal-web! person from to person))
             (else
              (tell-web! (list "You can't force"
                           person
                           "to move!")
-			port))))))
+		        actor))))))
 
 (define (find-exit from to)
   (find (lambda (exit)
@@ -809,9 +818,9 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (add-thing! to mobile-thing)
   (enter-place! mobile-thing))
 
-(define (move-internal-web! mobile-thing from to client)
+(define (move-internal-web! mobile-thing from to person)
   (leave-place! mobile-thing)
   (remove-thing! from mobile-thing)
   (set-location! mobile-thing to)
   (add-thing! to mobile-thing)
-  (enter-place-web! mobile-thing client))
+  (enter-place-web! mobile-thing))

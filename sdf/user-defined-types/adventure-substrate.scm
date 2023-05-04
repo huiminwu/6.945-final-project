@@ -337,8 +337,8 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (if debug-output
       (send-message! message debug-output)))
 
-(define (tell-web! message client)
-  (send-message-web! message client))
+(define (tell-web! message actor)
+  (send-message-web! message actor))
 
 (define (say! person message)
   (tell! (append (list person "says:") message)
@@ -401,14 +401,15 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (property-getter screen:port screen?))
 
 (define-generic-procedure-handler send-message!
-  (match-args message? screen?)
-  (lambda (message screen)
-    (display-message message (get-port screen))))
+  (match-args message? port?)
+  (lambda (message port)
+    (display-message message port)))
 
 (define-generic-procedure-handler send-message-web!
   (match-args message? (lambda (x) #t))
-  (lambda (message client)
-    (display-message message client)))
+  (lambda (message person)
+    (display-message message (get-port person))
+    (display-message (list "<br>") (get-port person))))
 
 
 ;;; Clock

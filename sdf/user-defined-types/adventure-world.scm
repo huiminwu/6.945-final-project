@@ -38,11 +38,11 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 
 (define (start-web-adventure my-name client)
   (if (false? (find-object-by-name my-name all-avatars))
-      (let ((avatar-obj (create-avatar my-name (random-choice all-places))))
+      (let ((avatar-obj (create-avatar my-name (random-choice all-places) client)))
 	(set! all-avatars (append! all-avatars (list avatar-obj)))
-	(tell-web! (list "Welcome to MIT" my-name "\n") client)
+	(tell-web! (list "Welcome to MIT" my-name "\n") avatar-obj)
 	(whats-here-web client my-name))
-      (tell-web! (list "This avatar already exists. Please try again.") client)))
+      (tell-web! (list "This avatar already exists. Please try again.") avatar-obj)))
  
 (define (avatar-exists name)
   (not (false? (find-object-by-name name all-avatars))))
@@ -86,9 +86,9 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 	   (find-exit-in-direction direction
 				   (get-location my-avatar))))
       (if exit
-	  (take-exit-web! exit my-avatar client)
+	  (take-exit-web! exit my-avatar)
 	  (tell-web! (list "No exit in" direction "direction")
-		     client))))
+		     my-avatar))))
     'done)
 
 (define (take-thing name avatar-name)
@@ -125,7 +125,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   'done)
 
 (define (whats-here-web client my-name)
-  (look-around-web (find-object-by-name my-name all-avatars) client)
+  (look-around-web (find-object-by-name my-name all-avatars))
   'done)
 
 (define (say avatar-name . message)
@@ -341,10 +341,11 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
               'acquisitiveness 1/10
               'hunger hunger))
 
-(define (create-avatar name place)
+(define (create-avatar name place port)
   (make-avatar 'name name
                'location place
-               'screen (make-screen 'name 'the-screen)))
+               'port port
+	       'log ""))
 
 (define (can-go-both-ways from direction reverse-direction to)
   (create-exit from direction to)
