@@ -408,7 +408,8 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define-generic-procedure-handler send-message-web!
   (match-args message? (lambda (x) #t))
   (lambda (message client)
-    (display-message message client)))
+    (display-message message client)
+    (display-message (list "<br>") client)))
 
 
 ;;; Clock

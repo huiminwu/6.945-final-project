@@ -252,7 +252,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
               person)
     (let ((people (people-here person)))
       (if (n:pair? people)
-          (tell! (append (list person "says:") (cons "Hi" people))
+          (tell-web! (append (list person "says:") (cons "Hi" people))
             person)))))
 
 (define (when-alive callback)
