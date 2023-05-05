@@ -5,18 +5,22 @@
 <h4> Actions: </h4>
 <form method="post">
   <label for="go-web"> Go :</label>
-  <select id="go-web" name="go-web" size="4">
-    <option value="north">North</option>
-    <option value="south">South</option>
-    <option value="east">East</option>
-    <option value="west">West</option>
-    <option value="up">Up</option>
-    <option value="down">Down</option>
-    <option value="in">In</option>
-    <option value="out">Out</option>
-    <option value="skew">Skew</option>
-  </select><br><br>
-  <input type="submit" />
+  <button type="submit" name="go-web" value="north"> North </button>
+  <button type="submit" name="go-web" value="south"> South </button> 
+  <button type="submit" name="go-web" value="east"> East </button>
+  <button type="submit" name="go-web" value="west"> West </button>
+  <button type="submit" name="go-web" value="up"> Up </button>
+  <button type="submit" name="go-web" value="down"> Down </button>
+  <button type="submit" name="go-web" value="in"> In </button>
+  <button type="submit" name="go-web" value="out"> Out </button>
+  <button type="submit" name="go-web" value="skew"> Skew </button>
+  <br/>
+</form>
+
+<form method="post">
+  <label for="hangout"> Hangout (ticks) :</label>
+  <input type="number" name="hangout">
+  <input type="submit">
 </form>
 
 </body>

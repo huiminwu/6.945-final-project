@@ -495,6 +495,9 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define add-log
   (property-adder avatar:log avatar? any-object?))
 
+(define set-log!
+  (property-setter avatar:log avatar? any-object?))
+
 (define-generic-procedure-handler send-message!
   (match-args message? avatar?)
   (lambda (message avatar)
@@ -541,6 +544,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
          avatar))
 
 (define (look-around-web avatar client)
+  (set-log! avatar '())
   (tell-web! (list "You are in" (get-location avatar)) client avatar)
   (let ((my-things (get-things avatar)))
     (if (n:pair? my-things)
