@@ -249,11 +249,13 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (lambda (super person)
     (super person)
     (tell-web! (list person "enters" (get-location person))
-              person)
+               person
+	       person)
     (let ((people (people-here person)))
       (if (n:pair? people)
           (tell-web! (append (list person "says:") (cons "Hi" people))
-            person)))))
+		     person
+		     person)))))
 
 (define (when-alive callback)
   (lambda (person)
@@ -282,7 +284,23 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (if (< (get-health person) 1)
       (die! person)))
 
+(define (suffer-web! hits person)
+  (guarantee n:exact-positive-integer? hits)
+  (say! person (list "Ouch!" hits "hits is more than I want!"))
+  (set-health! person (- (get-health person) hits))
+  (if (< (get-health person) 1)
+      (die-web! person)))
+
 (define (die! person)
+  (for-each (lambda (thing)
+              (drop-thing! thing person))
+            (get-things person))
+  (announce!
+   '("An earth-shattering, soul-piercing scream is heard..."))
+  (set-health! person 0)
+  (move! person (get-heaven) person))
+
+(define (die-web! person)
   (for-each (lambda (thing)
               (drop-thing! thing person))
             (get-things person))
@@ -443,11 +461,11 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
       (let ((people (people-here troll)))
         (if (n:null? people)
             (tell! (list (possessive troll) "belly rumbles")
-                      troll)
+                       troll)
             (let ((victim (random-choice people)))
               (tell! (list troll "takes a bite out of" victim)
-                        troll)
-              (suffer! (random-number 3) victim))))))
+                         troll)
+              (suffer-web! (random-number 3) victim))))))
 
 (define-clock-handler troll? eat-people!)
 
@@ -456,9 +474,13 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define avatar:screen
   (make-property 'screen
                  'predicate screen?))
+(define avatar:log
+  (make-property 'log
+		 'predicate (is-list-of any-object?)
+		 'default-value '()))
 
 (define avatar?
-  (make-type 'avatar (list avatar:screen)))
+  (make-type 'avatar (list avatar:screen avatar:log)))
 (set-predicate<=! avatar? person?)
 
 (define make-avatar
@@ -466,6 +488,12 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 
 (define get-screen
   (property-getter avatar:screen avatar?))
+
+(define get-log
+  (property-getter avatar:log avatar?))
+
+(define add-log
+  (property-adder avatar:log avatar? any-object?))
 
 (define-generic-procedure-handler send-message!
   (match-args message? avatar?)
@@ -513,25 +541,27 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
          avatar))
 
 (define (look-around-web avatar client)
-  (tell-web! (list "You are in" (get-location avatar)) client)
+  (tell-web! (list "You are in" (get-location avatar)) client avatar)
   (let ((my-things (get-things avatar)))
     (if (n:pair? my-things)
-	(tell-web! (cons "Your bag contains:" my-things) client)))
+	(tell-web! (cons "Your bag contains:" my-things) client avatar)))
   (let ((things (append (things-here avatar)
 			(people-here avatar))))
     (if (n:pair? things)
 	(tell-web! (cons "You see here:" things)
-		   client)))
+		   client
+		   avatar)))
   (let ((vistas (vistas-here avatar)))
     (if (n:pair? vistas)
-	(tell-web! (cons "You can see:" vistas) client)))
+	(tell-web! (cons "You can see:" vistas) client avatar)))
   (tell-web! (let ((exits (exits-here avatar)))
 	       (if (n:pair? exits)
 	       (cons "You can exit:"
 		     (map get-direction exits))
 	       ("There are no exits..."
 		"you are dead and gone to heaven!")))
-	     client)) 
+	     client
+	     avatar)) 
 
 ;;; Motion
 
@@ -559,6 +589,13 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
                  (get-location thing)
                  destination
                  actor))
+
+(define (move-web! thing destination actor client)
+  (generic-move-web! thing
+                 (get-location thing)
+                 destination
+                 actor
+		 client))
 
 (define generic-move!
   (most-specific-generic-procedure 'generic-move! 4 #f))
@@ -687,7 +724,8 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (match-args thing? container? container? person? port?)
   (lambda (thing from to actor port)
     (tell-web! (list thing "is not movable")
-               port)))
+               port
+	       actor)))
 
 ;; coderef: generic-move:steal
 (define-generic-procedure-handler generic-move-web!
@@ -698,29 +736,33 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
       (cond ((eqv? from to)
              (tell-web! (list new-holder "is already carrying"
                           mobile-thing)
-			port))
+			port
+			actor))
             ((eqv? actor former-holder)
              (tell-web! (list actor
                              "gives" mobile-thing
                              "to" new-holder)
-			port))
+			port
+			actor))
             ((eqv? actor new-holder)
              (tell-web! (list actor
                              "takes" mobile-thing
                              "from" former-holder)
-			port))
+			port
+			actor))
             (else
              (tell-web! (list actor
                              "takes" mobile-thing
                              "from" former-holder
                              "and gives it to" new-holder)
-			port)))
+			port
+			actor)))
       (if (not (eqv? actor former-holder))
           (say-web! former-holder (list "Yaaaah! I am upset!") port))
       (if (not (eqv? actor new-holder))
           (say-web! new-holder (list "Whoa! Where'd you get this?") port))
       (if (not (eqv? from to))
-          (move-internal-web! mobile-thing from to port)))))
+          (move-internal-web! mobile-thing from to port actor)))))
 
 ;; coderef: generic-move-web:take
 (define-generic-procedure-handler generic-move-web!
@@ -730,15 +772,17 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
       (cond ((eqv? actor new-holder)
              (tell-web! (list actor
                              "picks up" mobile-thing)
-			port))
+			port
+			actor))
             (else
              (tell-web! (list actor
                              "picks up" mobile-thing
                              "and gives it to" new-holder)
-			port)))
+			port
+			actor)))
       (if (not (eqv? actor new-holder))
           (say-web! new-holder (list "Whoa! Thanks, dude!") port))
-      (move-internal-web! mobile-thing from to port))))
+      (move-internal-web! mobile-thing from to port actor))))
 
 ;; coderef: generic-move-web:drop
 (define-generic-procedure-handler generic-move-web!
@@ -748,30 +792,34 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
       (cond ((eqv? actor former-holder)
              (tell-web! (list actor
                              "drops" mobile-thing)
-			port))
+			port
+			actor))
             (else
              (tell-web! (list actor
                              "takes" mobile-thing
                              "from" former-holder
                              "and drops it")
-			port)))
+			port
+			actor)))
       (if (not (eqv? actor former-holder))
           (say-web! former-holder
                     (list "What did you do that for?")
 		    port))
-      (move-internal-web! mobile-thing from to port))))
+      (move-internal-web! mobile-thing from to port actor))))
 
 (define-generic-procedure-handler generic-move-web!
   (match-args mobile-thing? place? place? person? port?)
   (lambda (mobile-thing from to actor port)
     (cond ((eqv? from to)
            (tell-web! (list mobile-thing "is already in" from)
-		      port))
+		      port
+		      actor))
           (else
            (tell-web! (list "How do you propose to move"
                         mobile-thing
                         "without carrying it?")
-		      port)))))
+		      port
+		      actor)))))
 
 ;; coderef: generic-move-web:person
 (define-generic-procedure-handler generic-move-web!
@@ -780,21 +828,24 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
     (let ((exit (find-exit from to)))
       (cond ((or (eqv? from (get-heaven))
                  (eqv? to (get-heaven)))
-             (move-internal-web! person from to port))
+             (move-internal-web! person from to port actor))
             ((not exit)
              (tell-web! (list "There is no exit from" from
                           "to" to)
-			port))
+			port
+			actor))
             ((eqv? person actor)
              (tell-web! (list person "leaves via the"
                              (get-direction exit) "exit")
-			port)
-             (move-internal-web! person from to port))
+			port
+			actor)
+             (move-internal-web! person from to port actor))
             (else
              (tell-web! (list "You can't force"
                           person
                           "to move!")
-			port))))))
+			port
+			actor))))))
 
 (define (find-exit from to)
   (find (lambda (exit)
@@ -809,7 +860,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (add-thing! to mobile-thing)
   (enter-place! mobile-thing))
 
-(define (move-internal-web! mobile-thing from to client)
+(define (move-internal-web! mobile-thing from to client actor)
   (leave-place! mobile-thing)
   (remove-thing! from mobile-thing)
   (set-location! mobile-thing to)

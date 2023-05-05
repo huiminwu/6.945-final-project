@@ -40,9 +40,9 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (if (false? (find-object-by-name my-name all-avatars))
       (let ((avatar-obj (create-avatar my-name (random-choice all-places))))
 	(set! all-avatars (append! all-avatars (list avatar-obj)))
-	(tell-web! (list "Welcome to MIT" my-name "\n") client)
+	(tell-web! (list "Welcome to MIT" my-name "\n") client avatar-obj)
 	(whats-here-web client my-name))
-      (tell-web! (list "This avatar already exists. Please try again.") client)))
+      (tell-web! (list "This avatar already exists. Please try again.") client avatar-obj)))
  
 (define (avatar-exists name)
   (not (false? (find-object-by-name name all-avatars))))
@@ -81,14 +81,16 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
     'done)
 
 (define (go-web direction name client)
-   (let ((my-avatar (find-object-by-name name all-avatars)))
+  (let ((my-avatar (find-object-by-name name all-avatars)))
+    (tell-web! (reverse (get-log my-avatar)) client my-avatar)
     (let ((exit
 	   (find-exit-in-direction direction
 				   (get-location my-avatar))))
       (if exit
 	  (take-exit-web! exit my-avatar client)
 	  (tell-web! (list "No exit in" direction "direction")
-		     client))))
+		     client
+		     my-avatar))))
     'done)
 
 (define (take-thing name avatar-name)
@@ -344,7 +346,8 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define (create-avatar name place)
   (make-avatar 'name name
                'location place
-               'screen (make-screen 'name 'the-screen)))
+               'screen (make-screen 'name 'the-screen)
+	       'log '()))
 
 (define (can-go-both-ways from direction reverse-direction to)
   (create-exit from direction to)

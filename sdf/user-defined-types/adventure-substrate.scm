@@ -322,7 +322,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (most-specific-generic-procedure 'send-message! 2 #f))
 
 (define send-message-web!
-  (most-specific-generic-procedure 'send-message-web! 2 #f))
+  (most-specific-generic-procedure 'send-message-web! 3 #f))
 
 (define (narrate! message person-or-place)
   (send-message! message
@@ -337,8 +337,8 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (if debug-output
       (send-message! message debug-output)))
 
-(define (tell-web! message client)
-  (send-message-web! message client))
+(define (tell-web! message client actor)
+  (send-message-web! message client actor))
 
 (define (say! person message)
   (tell! (append (list person "says:") message)
@@ -406,10 +406,23 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
     (display-message message (get-port screen))))
 
 (define-generic-procedure-handler send-message-web!
-  (match-args message? (lambda (x) #t))
-  (lambda (message client)
+  (match-args message? port? (lambda (x) #t))
+  (lambda (message client actor)
+    (for-each (lambda (thing)
+		(add-log actor thing)
+		(add-log actor "<br>"))
+	      message)
+    #| (display-message (get-log actor) client)|#
+    #|(add-log actor message)|#
+    #|(set-log! (list (get-log actor) message) actor)
+    
+    (display "log")
+    (display (get-log actor))|#
+
+    
     (display-message message client)
     (display-message (list "<br>") client)))
+    #|(display-message (get-log actor) client)))|#
 
 
 ;;; Clock
