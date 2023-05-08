@@ -578,6 +578,9 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define (drop-thing! thing person)
   (move! thing (get-location person) person))
 
+(define (drop-thing-web! thing person client)
+  (move-web! thing (get-location person) person client))
+
 (define (take-exit-web! exit mobile-thing client)
   (generic-move-web! mobile-thing
                  (get-from exit)

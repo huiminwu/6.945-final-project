@@ -85,14 +85,15 @@
       (let* ((content-length (string->number (find-content-length request)))
 	     (post-body (read-string content-length client))
 	     (go-web-index (string-search-forward "go-web=" post-body))
-	     (take-thing-index (string-search-forward "take-thing=" post-body)))
+	     (take-thing-index (string-search-forward "take-thing=" post-body))
+	     (avatar-name-symbol (string->symbol (acquire-GET-name request))))
 	(if (not (false? go-web-index))
 	    (let ((direction (substring post-body (+ go-web-index 7))))
-	      (go-web (string->symbol direction) (string->symbol (acquire-GET-name request)) client))
+	      (go-web (string->symbol direction) avatar-name-symbol client))
 	    (if (not (false? take-thing-index))
 		(begin
 		(take-thing-web (string->symbol (substring post-body (+ take-thing-index 11)))
-				(string->symbol (acquire-GET-name request))
+				avatar-name-symbol
 				client)))
 	    ))))
 )

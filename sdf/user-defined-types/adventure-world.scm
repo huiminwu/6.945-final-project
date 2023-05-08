@@ -115,6 +115,14 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
         (drop-thing! thing my-avatar)))
   'done)
 
+(define (drop-thing-web name avatar-name client)
+  (let* ((my-avatar (find-object-by-name avatar-name all-avatars))
+	 (thing (find-thing-web name my-avatar avatar-name client)))
+    (tell-web! (reverse (get-log my-avatar)) client my-avatar)
+    (if thing
+        (drop-thing-web! thing my-avatar client)))
+  'done)
+
 (define (look-in-bag avatar-name #!optional person-name)
   (let* ((my-avatar (find-object-by-name avatar-name all-avatars))
 	       (person
@@ -142,6 +150,12 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (let ((my-avatar (find-object-by-name avatar-name all-avatars)))
     (say! my-avatar message))
   'done)
+
+(define (say-web avatar-name client . message)
+  (let ((my-avatar (find-object-by-name avatar-name all-avatars)))
+    (say-web! my-avatar message client))
+  'done)
+
 
 (define (tell avatar-name person-name . message)
   (tell! message (find-person person-name avatar-name))

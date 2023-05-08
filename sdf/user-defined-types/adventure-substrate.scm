@@ -344,6 +344,11 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (tell! (append (list person "says:") message)
             person))
 
+(define (say-web! person message client)
+  (tell-web! (append (list person "says:") message)
+	     client
+             person))
+
 (define (announce! message)
   (for-each (lambda (place)
               (send-message! message place))
@@ -408,10 +413,13 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define-generic-procedure-handler send-message-web!
   (match-args message? port? (lambda (x) #t))
   (lambda (message client actor)
-    (add-log actor "<br>")
-    (for-each (lambda (thing)
-		(add-log actor thing))
-	      message)
+    (if (avatar? actor)
+	(begin
+	  (add-log actor "<br>")
+	  (for-each (lambda (thing)
+		      (add-log actor thing))
+		    message)
+	  ))
 
     (display-message message client)
     (display-message (list "<br>") client)))
