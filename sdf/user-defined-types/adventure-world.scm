@@ -100,6 +100,14 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
         (take-thing! thing my-avatar)))
   'done)
 
+(define (take-thing-web name avatar-name client)
+  (let ((thing (find-thing-web name (here avatar-name) avatar-name client))
+	(my-avatar (find-object-by-name avatar-name all-avatars)))
+    (tell-web! (reverse (get-log my-avatar)) client my-avatar)
+    (if thing
+        (take-thing-web! thing my-avatar client)))
+  'done)
+
 (define (drop-thing name avatar-name)
   (let* ((my-avatar (find-object-by-name avatar-name all-avatars))
 	       (thing (find-thing name my-avatar avatar-name)))
@@ -163,12 +171,25 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (let ((thing
          (find-object-by-name
           name
-          (person-or-place-things person-or-place avatar-name))))
+          (person-or-place-things person-or-place))))
     (if (not thing)
-        (tell! (cons* "There is nothing called"
+        (tell (cons* "There is nothing called"
                       name
                       (person-or-place-name person-or-place avatar-name))
-               (find-object-by-name avatar-name all-avatars)))
+		   (find-object-by-name avatar-name all-avatars)))
+    thing))
+
+(define (find-thing-web name person-or-place avatar-name client)
+  (let ((thing
+         (find-object-by-name
+          name
+          (person-or-place-things person-or-place))))
+    (if (not thing)
+        (tell-web! (cons* "There is nothing called"
+                      name
+                      (person-or-place-name person-or-place avatar-name))
+		   client
+		   (find-object-by-name avatar-name all-avatars)))
     thing))
 
 (define (person-or-place-things person-or-place)

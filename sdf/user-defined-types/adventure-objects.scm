@@ -572,6 +572,9 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define (take-thing! thing person)
   (move! thing (get-bag person) person))
 
+(define (take-thing-web! thing person client)
+  (move-web! thing (get-bag person) person client))
+
 (define (drop-thing! thing person)
   (move! thing (get-location person) person))
 
