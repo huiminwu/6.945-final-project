@@ -1,13 +1,51 @@
 <!DOCTYPE html>
 <html>
-<body>
-<h1> Welcome to Hui Min and Maria's Adventure Game! </h1>
-<iframe name="empty" style="display:none;"></iframe>
+  <style>
+input[type=text], select {
+  width: 40%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
 
+input[type=submit] {
+  width: 40%;
+  background-color: #4CAF50;
+  color: white;
+  padding: 14px 20px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+input[type=submit]:hover {
+  background-color: #45a049;
+}
+
+div {
+  border-radius: 5px;
+  background-color: #f2f2f2;
+  padding: 20px;
+}
+  </style>
+  
+  <body>
+    <center>
+<h1> Welcome to Hui Min and Maria's Adventure Game! </h1>
+<br>
+<img src="https://images.fineartamerica.com/images/artworkimages/mediumlarge/2/the-great-dome-at-mit-campus-yang-luo-branch.jpg"
+     width=250 height=170>
+<br>
+<br>
 <form action="/pages/otherpage.html">
   <label for="name">Name:</label><br>
-  <input type="text" id="name" name="name"><br>
+  <input type="text" id="name" name="name" placeholder="Your Name..."><br>
   <input type="submit" value="Submit">
 </form>
+</center>
 </body>
 </html>
