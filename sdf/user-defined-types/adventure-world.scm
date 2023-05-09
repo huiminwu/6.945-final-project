@@ -123,19 +123,21 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
         (drop-thing-web! thing my-avatar client)))
   'done)
 
-(define (look-in-bag avatar-name #!optional person-name)
+(define (look-in-bag avatar-name client #!optional person-name)
   (let* ((my-avatar (find-object-by-name avatar-name all-avatars))
 	       (person
          (if (default-object? person-name)
              my-avatar
-             (find-person person-name avatar-name))))
+             (find-person-web person-name avatar-name client))))
+    (tell-web! (reverse (get-log my-avatar)) client my-avatar)
     (if person
-        (tell! (let ((referent (local-possessive person avatar-name))
-                     (things (get-things person)))
-                 (if (n:pair? things)
-                     (cons* referent "bag contains" things)
-                     (list referent "bag is empty")))
-               my-avatar)))
+        (tell-web! (let ((referent (local-possessive person avatar-name))
+			 (things (get-things person)))
+                     (if (n:pair? things)
+			 (cons* referent "bag contains" things)
+			 (list referent "bag is empty")))
+		   client
+		   my-avatar)))
   'done)
 
 (define (whats-here avatar-name)
@@ -153,6 +155,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 
 (define (say-web avatar-name client . message)
   (let ((my-avatar (find-object-by-name avatar-name all-avatars)))
+    (tell-web! (reverse (get-log my-avatar)) client my-avatar)
     (say-web! my-avatar message client))
   'done)
 
@@ -178,6 +181,16 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
          (find-object-by-name name (people-here my-avatar))))
     (if (not person)
         (tell! (list "There is no one called" name "here")
+               my-avatar))
+    person))
+
+(define (find-person-web name avatar-name client)
+  (let* ((my-avatar (find-object-by-name avatar-name all-avatars))
+	       (person
+         (find-object-by-name name (people-here my-avatar))))
+    (if (not person)
+        (tell-web! (list "There is no one called" name "here")
+		   client
                my-avatar))
     person))
 

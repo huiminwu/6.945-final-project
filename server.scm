@@ -86,19 +86,38 @@
 	     (post-body (read-string content-length client))
 	     (go-web-index (string-search-forward "go-web=" post-body))
 	     (take-thing-index (string-search-forward "take-thing=" post-body))
+	     (drop-thing-index (string-search-forward "drop-thing=" post-body))
+	     (say-index (string-search-forward "say=" post-body))
+	     (look-in-bag-index (string-search-forward "look-in-bag=" post-body))
 	     (avatar-name-symbol (string->symbol (acquire-GET-name request))))
 	(if (not (false? go-web-index))
 	    (let ((direction (substring post-body (+ go-web-index 7))))
 	      (go-web (string->symbol direction) avatar-name-symbol client))
 	    (if (not (false? take-thing-index))
-		(begin
 		(take-thing-web (string->symbol (substring post-body (+ take-thing-index 11)))
 				avatar-name-symbol
-				client)))
-	    ))))
+				client)
+		(if (not (false? drop-thing-index))
+		    (drop-thing-web (string->symbol (substring post-body (+ drop-thing-index 11)))
+				    avatar-name-symbol
+				    client)
+		    (if (not (false? say-index))
+			(say-web avatar-name-symbol
+				 client
+				 (string->symbol (substring post-body (+ say-index 4))))
+			(if (not (false? look-in-bag-index))
+			    (let ((look-in-bag-string (substring post-body (+ look-in-bag-index 12))))
+			      (if (eqv? (string-length look-in-bag-string) 0)
+				  
+				  (look-in-bag avatar-name-symbol
+					       client)
+				  (look-in-bag avatar-name-symbol
+					       client
+					       (string->symbol look-in-bag-string)))))
+			    
+			)))))))
 )
 (run 1234)
-
 #| Navigate to localhost:1234 |#
 #| Submit your name, it should redirect you to another page |#
 
