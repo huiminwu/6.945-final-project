@@ -40,9 +40,11 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (if (false? (find-object-by-name my-name all-avatars))
       (let ((avatar-obj (create-avatar my-name (random-choice all-places))))
 	(set! all-avatars (append! all-avatars (list avatar-obj)))
+	(display-message (list "<h4> Output: </h4>") client)
 	(tell-web! (list "Welcome to MIT" my-name "\n") client avatar-obj)
 	(whats-here-web client my-name))
-      (tell-web! (list "This avatar already exists. Please try again.") client avatar-obj)))
+      
+      (tell-web! (list "This avatar already exists. Please go back to the main page and try again.") client avatar-obj)))
  
 (define (avatar-exists name)
   (not (false? (find-object-by-name name all-avatars))))
@@ -83,6 +85,8 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define (go-web direction name client)
   (let ((my-avatar (find-object-by-name name all-avatars)))
     (tell-web! (reverse (get-log my-avatar)) client my-avatar)
+    (display-message (list "<h4> Output: </h4>") client)
+    
     (let ((exit
 	   (find-exit-in-direction direction
 				   (get-location my-avatar))))
@@ -104,6 +108,8 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (let ((thing (find-thing-web name (here avatar-name) avatar-name client))
 	(my-avatar (find-object-by-name avatar-name all-avatars)))
     (tell-web! (reverse (get-log my-avatar)) client my-avatar)
+    (display-message (list "<h4> Output: </h4>") client)
+    
     (if thing
         (take-thing-web! thing my-avatar client)))
   'done)
@@ -119,6 +125,8 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (let* ((my-avatar (find-object-by-name avatar-name all-avatars))
 	 (thing (find-thing-web name my-avatar avatar-name client)))
     (tell-web! (reverse (get-log my-avatar)) client my-avatar)
+    (display-message (list "<h4> Output: </h4>") client)
+    
     (if thing
         (drop-thing-web! thing my-avatar client)))
   'done)
@@ -130,6 +138,8 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
              my-avatar
              (find-person-web person-name avatar-name client))))
     (tell-web! (reverse (get-log my-avatar)) client my-avatar)
+    (display-message (list "<h4> Output: </h4>") client)
+    
     (if person
         (tell-web! (let ((referent (local-possessive person avatar-name))
 			 (things (get-things person)))
@@ -156,7 +166,9 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define (say-web avatar-name client . message)
   (let ((my-avatar (find-object-by-name avatar-name all-avatars)))
     (tell-web! (reverse (get-log my-avatar)) client my-avatar)
-    (display message)
+    (tell-web! (list "<h4> Output: </h4>") client my-avatar)
+    
+    
     (say-web! my-avatar (car message) client))
   'done)
 
