@@ -1,8 +1,39 @@
 <!DOCTYPE html>
 <html>
+  <head>
+  <style>
+    button, input[type=submit] {
+	transition-duration: 0.4s;
+	background-color: #4CAF50;
+	border: 2px solid #4CAF50;
+	color: white;
+	border-radius: 4px;
+	padding: 2px 8px;
+	text-align: center;
+	margin: 4px 2px;
+	cursor: pointer;
+    }
+    button:hover, input[type=submit]:hover {
+	background-color: white;
+	border: 2px solid #4CAF50;
+	color: black;
+    }
+    .actions {
+	background-color: #f5f5f5;
+	border-radius: 4px;
+	width: 550px;
+	padding: 10px;
+    }
+  </style>
+  </head>
 <body>
   <h1> Your Adventure </h1>
-<h4> Actions: </h4>
+  <h3> Actions: </h3>
+ <div class="actions">
+<form method="post">
+  <button type="submit" name="look-in-bag" value=""> Look In My Bag </button>
+</form>
+
 <form method="post">
   <label for="go-web"> Go :</label>
   <button type="submit" name="go-web" value="north"> North </button>
@@ -42,13 +73,12 @@
 </form>
 
 <form method="post">
-  <button type="submit" name="look-in-bag" value=""> Look In My Bag </button>
-</form>
-
-<form method="post">
+  <label for="look-in-bag"> Name: </label>
   <input type="text" name="look-in-bag">
   <input type="submit" value="Look In Their Bag">
 </form>
+</div>
+<h3> Game Output: </h4>
 
 </body>
 </html>

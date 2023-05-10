@@ -415,7 +415,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (lambda (message client actor)
     (if (avatar? actor)
 	(begin
-	  (add-log actor "<br>")
+	  (add-log actor "\n")
 	  (for-each (lambda (thing)
 		      (add-log actor thing))
 		    message)
