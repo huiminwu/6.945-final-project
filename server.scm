@@ -4,7 +4,6 @@
 (define connection)
 (define game-in-session #f)
 (define (find-keyword-function post-body)
-  (display post-body)
   (let ((equal-index (string-search-forward "=" post-body)))
     (substring post-body 0 equal-index)))
 
@@ -140,7 +139,7 @@
 		    (list decoded-html))))
 	((string=? keyword-function "look-in-bag")
 	 (let* ((look-in-bag-index (string-search-forward "look-in-bag=" post-body))
-		(look-in-bag-string (substring post-body (look-in-bag-index 12))))
+		(look-in-bag-string (substring post-body (+ look-in-bag-index 12))))
 	   (if (eqv? (string-length look-in-bag-string) 0)
 	       (look-in-bag avatar-name
 			    client)

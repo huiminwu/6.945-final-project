@@ -498,7 +498,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define set-log!
   (property-setter avatar:log avatar? any-object?))
 
-s(define-generic-procedure-handler send-message!
+(define-generic-procedure-handler send-message!
   (match-args message? avatar?)
   (lambda (message avatar)
     (send-message! message (get-screen avatar))))
