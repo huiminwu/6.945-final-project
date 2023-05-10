@@ -49,6 +49,11 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define (avatar-exists name)
   (not (false? (find-object-by-name name all-avatars))))
 
+(define (load-log name client)
+  (let ((my-avatar (find-object-by-name name all-avatars)))
+    (display-message (reverse (get-log my-avatar)) client)))
+   
+
 #|
 (define (start-web-adventure my-name client)
   (set! the-clock (make-clock))
@@ -166,7 +171,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define (say-web avatar-name client . message)
   (let ((my-avatar (find-object-by-name avatar-name all-avatars)))
     (tell-web! (reverse (get-log my-avatar)) client my-avatar)
-    (tell-web! (list "<h4> Output: </h4>") client my-avatar)
+    (display-message (list "<h4> Output: </h4>") client my-avatar)
     
     
     (say-web! my-avatar (car message) client))
