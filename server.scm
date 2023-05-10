@@ -66,6 +66,38 @@
     (display "HTTP/1.0 200 OK\n\n" client)
     (send-file client request-path request)))
 
+(define (find-keyword-function post-body)
+  (let ((equal-index (string-search-forward "=" post-body)))
+    (substring post-body 0 equal-index)))
+
+(define (replace-all string substring-to-replace new-substring)
+  (let loop ((string-so-far string))
+    (let ((idx (string-search-forward substring-to-replace string-so-far)))
+      (if (false? idx)
+	  string-so-far
+	  (loop (string-append (substring string-so-far 0 idx)
+			       new-substring
+			       (substring string-so-far (+ idx (string-length substring-to-replace)))))))))
+					  
+(define (decode-html html)
+  (let* ((replace-space (replace-all html "+" " "))
+	 (replace-double-quote (replace-all replace-space "%22" "\""))
+	 (replace-hash-mark (replace-all replace-double-quote "%23" "#"))
+	 (replace-dollar-sign (replace-all replace-hash-mark "%24" "$"))
+	 (replace-percent (replace-all replace-dollar-sign "%25" "%"))
+	 (replace-ampersand (replace-all replace-percent "%26" "&"))
+	 (replace-plus (replace-all replace-ampersand "%2B" "+"))
+	 (replace-comma (replace-all replace-plus "%2C" ","))
+	 (replace-less-than (replace-all replace-comma "%3C" "<"))
+	 (replace-equal (replace-all replace-less-than "%3D" "="))
+	 (replace-greater-than (replace-all replace-equal "%3E" ">"))
+	 (replace-forward-slash (replace-all replace-greater-than "%2F" "/"))
+	 (replace-colon (replace-all replace-forward-slash "%3A" ":"))
+	 (replace-question (replace-all replace-colon "%3F" "?"))
+	 (replace-exclamation (replace-all replace-question "%21" "!"))
+	 (replace-quote (replace-all replace-exclamation "%27" "'")))
+    replace-quote))
+
 (define (send-file client filename request)
    (let ((file (open-input-file filename)))
     (let loop ((ch (read-char file)))
@@ -84,38 +116,37 @@
   (if (post-request? request) ; handle movement (ideally this is a new function
       (let* ((content-length (string->number (find-content-length request)))
 	     (post-body (read-string content-length client))
+	     (keyword-function (find-keyword-function post-body))
 	     (go-web-index (string-search-forward "go-web=" post-body))
 	     (take-thing-index (string-search-forward "take-thing=" post-body))
 	     (drop-thing-index (string-search-forward "drop-thing=" post-body))
 	     (say-index (string-search-forward "say=" post-body))
 	     (look-in-bag-index (string-search-forward "look-in-bag=" post-body))
 	     (avatar-name-symbol (string->symbol (acquire-GET-name request))))
-	(if (not (false? go-web-index))
-	    (let ((direction (substring post-body (+ go-web-index 7))))
-	      (go-web (string->symbol direction) avatar-name-symbol client))
-	    (if (not (false? take-thing-index))
-		(take-thing-web (string->symbol (substring post-body (+ take-thing-index 11)))
+	(cond
+	 ((string=? keyword-function "go-web") (let ((direction (substring post-body (+ go-web-index 7))))
+						 (go-web (string->symbol direction)
+							 avatar-name-symbol
+							 client)))
+	  ((string=? keyword-function "take-thing") (take-thing-web (string->symbol (substring post-body (+ take-thing-index 11)))
 				avatar-name-symbol
-				client)
-		(if (not (false? drop-thing-index))
-		    (drop-thing-web (string->symbol (substring post-body (+ drop-thing-index 11)))
+				client))
+	  ((string=? keyword-function "drop-thing") (drop-thing-web (string->symbol (substring post-body (+ drop-thing-index 11)))
 				    avatar-name-symbol
-				    client)
-		    (if (not (false? say-index))
-			(say-web avatar-name-symbol
+				    client))
+	  ((string=? keyword-function "say") (say-web avatar-name-symbol
 				 client
-				 (string->symbol (substring post-body (+ say-index 4))))
-			(if (not (false? look-in-bag-index))
-			    (let ((look-in-bag-string (substring post-body (+ look-in-bag-index 12))))
-			      (if (eqv? (string-length look-in-bag-string) 0)
-				  
-				  (look-in-bag avatar-name-symbol
-					       client)
-				  (look-in-bag avatar-name-symbol
-					       client
-					       (string->symbol look-in-bag-string)))))
-			    
-			)))))))
+				 (list (decode-html (substring post-body (+ say-index 4))))))
+	  ((string=? keyword-function "look-in-bag")
+	   (let ((look-in-bag-string (substring post-body (+ look-in-bag-index 12))))
+	     (if (eqv? (string-length look-in-bag-string) 0)
+		 
+		 (look-in-bag avatar-name-symbol
+			      client)
+		 (look-in-bag avatar-name-symbol
+			      client
+			      (string->symbol look-in-bag-string)))))
+	  (else (display "function not found"))))))
 )
 (run 1234)
 #| Navigate to localhost:1234 |#

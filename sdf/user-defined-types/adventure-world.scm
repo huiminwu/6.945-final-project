@@ -156,7 +156,8 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define (say-web avatar-name client . message)
   (let ((my-avatar (find-object-by-name avatar-name all-avatars)))
     (tell-web! (reverse (get-log my-avatar)) client my-avatar)
-    (say-web! my-avatar message client))
+    (display message)
+    (say-web! my-avatar (car message) client))
   'done)
 
 
