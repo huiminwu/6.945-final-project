@@ -546,18 +546,25 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define (look-around-web avatar client)
   (set-log! avatar '())
   (tell-web! (list "You are in" (get-location avatar)) client avatar)
+  (add-to-log (list "You are in" (get-location avatar)) avatar)
   (let ((my-things (get-things avatar)))
     (if (n:pair? my-things)
-	(tell-web! (cons "Your bag contains:" my-things) client avatar)))
+	(begin
+	  (tell-web! (cons "Your bag contains:" my-things) client avatar)
+	  (add-to-log (cons "Your bag contains:" my-things) avatar))))
   (let ((things (append (things-here avatar)
 			(people-here avatar))))
     (if (n:pair? things)
-	(tell-web! (cons "You see here:" things)
-		   client
-		   avatar)))
+	(begin
+	  (tell-web! (cons "You see here:" things)
+		     client
+		     avatar)
+	  (add-to-log (cons "You see here:" things) avatar))))
   (let ((vistas (vistas-here avatar)))
     (if (n:pair? vistas)
-	(tell-web! (cons "You can see:" vistas) client avatar)))
+	(begin
+	  (tell-web! (cons "You can see:" vistas) client avatar)
+	  (add-to-log (cons "You can see:" vistas) avatar))))
   (tell-web! (let ((exits (exits-here avatar)))
 	       (if (n:pair? exits)
 	       (cons "You can exit:"
@@ -565,7 +572,14 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 	       ("There are no exits..."
 		"you are dead and gone to heaven!")))
 	     client
-	     avatar)) 
+	     avatar)
+  (add-to-log (let ((exits (exits-here avatar)))
+	       (if (n:pair? exits)
+	       (cons "You can exit:"
+		     (map get-direction exits))
+	       ("There are no exits..."
+		"you are dead and gone to heaven!")))
+	     avatar))
 
 ;;; Motion
 

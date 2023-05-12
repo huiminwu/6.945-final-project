@@ -76,7 +76,7 @@
   (lambda (pr client)
     (let ((request (get-header pr)))
       (if (not (false? (string-search-forward "name" request)))
-	  (let ((name (string->symbol (acquire-GET-name request))))
+	  (let ((name (string->symbol (decode-html (acquire-GET-name request)))))
 	    (if (not (avatar-exists name))
 		(start-web-adventure name client)
 		(load-log name client)))))))
@@ -146,6 +146,9 @@
 	       (look-in-bag avatar-name
 			    client
 			    (string->symbol look-in-bag-string)))))
+	((string=? keyword-function "display-health")
+	 (let* ((display-health-index (string-search-forward "display-health" post-body)))
+	   (display-health avatar-name client)))
 	(else (display "function not found"))))))
 
 (define (run port)
