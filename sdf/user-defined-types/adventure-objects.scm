@@ -458,7 +458,6 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (property-getter troll:hunger troll?))
 
 (define (eat-people! troll)
-  (display "regular")
   (if (flip-coin (get-hunger troll))
       (let ((people (people-here troll)))
         (if (n:null? people)
@@ -470,7 +469,6 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
               (suffer! (random-number 3) victim))))))
 
 (define (eat-people-web! troll client)
-  (display "here" client)
   (if (flip-coin (get-hunger troll))
       (let ((people (people-here troll)))
 	(if (n:null? people)
