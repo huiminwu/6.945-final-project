@@ -284,9 +284,9 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (if (< (get-health person) 1)
       (die! person)))
 
-(define (suffer-web! hits person)
+(define (suffer-web! hits person client)
   (guarantee n:exact-positive-integer? hits)
-  (say! person (list "Ouch!" hits "hits is more than I want!"))
+  (say-web! person (list "Ouch!" hits "hits is more than I want!") client)
   (set-health! person (- (get-health person) hits))
   (if (< (get-health person) 1)
       (die-web! person)))
@@ -300,14 +300,15 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (set-health! person 0)
   (move! person (get-heaven) person))
 
-(define (die-web! person)
+(define (die-web! person client)
   (for-each (lambda (thing)
-              (drop-thing! thing person))
+              (drop-thing-web! thing person client))
             (get-things person))
-  (announce!
-   '("An earth-shattering, soul-piercing scream is heard..."))
+  (announce-web!
+   '("An earth-shattering, soul-piercing scream is heard...")
+   client)
   (set-health! person 0)
-  (move! person (get-heaven) person))
+  (move-web! person (get-heaven) person client))
 
 (define (resurrect! person health)
   (guarantee n:exact-positive-integer? health)
@@ -457,6 +458,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (property-getter troll:hunger troll?))
 
 (define (eat-people! troll)
+  (display "regular")
   (if (flip-coin (get-hunger troll))
       (let ((people (people-here troll)))
         (if (n:null? people)
@@ -465,9 +467,25 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
             (let ((victim (random-choice people)))
               (tell! (list troll "takes a bite out of" victim)
                          troll)
-              (suffer-web! (random-number 3) victim))))))
+              (suffer! (random-number 3) victim))))))
+
+(define (eat-people-web! troll client)
+  (display "here" client)
+  (if (flip-coin (get-hunger troll))
+      (let ((people (people-here troll)))
+	(if (n:null? people)
+	    (tell-web! (list (possessive troll) "belly rumbles")
+		       client troll)
+	    (let ((victim (random-choice people)))
+	      (tell-web! (list troll "takes a bite out of" victim)
+			 client troll)
+	      (suffer-web! (random-number 3) victim client))))))
+			 
 
 (define-clock-handler troll? eat-people!)
+(define-clock-handler-web troll? port? eat-people-web!)
+
+
 
 ;;; Avatars
 
@@ -508,14 +526,14 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (lambda (super avatar)
     (super avatar)
     (look-around avatar)
-    (tick! (get-clock))))
+    (tick-web! (get-clock) port)))
 
 (define-generic-procedure-handler enter-place-web!
   (match-args avatar? port?)
   (lambda (super avatar port)
     (super avatar)
     (look-around-web avatar port)
-    (tick! (get-clock))))
+    (tick-web! (get-clock) port)))
 
 
 (define (look-around avatar)
