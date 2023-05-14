@@ -356,6 +356,11 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (if debug-output
       (send-message! message debug-output)))
 
+(define (announce-web! message client)
+  (for-each (lambda (place)
+	      (set-message-web! message client place))
+	    (get-all-places)))
+
 (define debug-output #f)
 
 (define (enable-debugging)
@@ -452,9 +457,19 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (for-each (lambda (thing) (clock-tick! thing))
             (clock-things clock)))
 
+(define (tick-web! clock client)
+  (set-current-time! clock (n:+ (current-time clock) 1))
+  (for-each (lambda (thing) (clock-tick-web! thing client))
+	    (clock-things clock)))
+
 (define clock-tick!
   (chaining-generic-procedure 'clock-tick! 1
-    (constant-generic-procedure-handler #f)))
+			      (constant-generic-procedure-handler #f)))
+
+(define clock-tick-web!
+  (chaining-generic-procedure 'clock-tick-web 2
+			      (constant-generic-procedure-handler
+			       #f)))
 
 (define (define-clock-handler type action)
   (define-generic-procedure-handler clock-tick!
@@ -462,3 +477,11 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
     (lambda (super object)
       (super object)
       (action object))))
+
+(define (define-clock-handler-web type1 type2 action)
+  (define-generic-procedure-handler clock-tick-web!
+    (match-args type1 type2)
+    (lambda (super object client)
+      (super object)
+      (action object client))))
+  
