@@ -200,10 +200,15 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; People
 
+(define full-health)
+(set! full-health (* (random-number 10) 3))
+(define (get-full-health)
+  full-health)
+
 (define person:health
   (make-property 'health
                  'predicate n:exact-integer?
-                 'default-value 3))
+                 'default-value (get-full-health)))
 
 (define person:bag
   (make-property 'bag
@@ -289,7 +294,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (say-web! person (list "Ouch!" hits "hits is more than I want!") client)
   (set-health! person (- (get-health person) hits))
   (if (< (get-health person) 1)
-      (die-web! person)))
+      (die-web! person client)))
 
 (define (die! person)
   (for-each (lambda (thing)
@@ -474,10 +479,11 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 	(if (n:null? people)
 	    (tell-web! (list (possessive troll) "belly rumbles")
 		       client troll)
-	    (let ((victim (random-choice people)))
+	    (let ((victim (random-choice people))
+		  (victim-rand-num (/ (get-full-health) 3)))
 	      (tell-web! (list troll "takes a bite out of" victim)
 			 client troll)
-	      (suffer-web! (random-number 3) victim client))))))
+	      (suffer-web! (* victim-rand-num (random-number 3)) victim client))))))
 			 
 
 (define-clock-handler troll? eat-people!)
@@ -530,6 +536,12 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (match-args avatar? port?)
   (lambda (super avatar port)
     (super avatar)
+    (if (and (eqv? (get-location avatar) (get-medical-center))
+	     (< (get-health avatar) (get-full-health)))
+	(begin
+	  (resurrect! avatar (get-full-health))
+	  (tell-web! (list avatar "healed to full health:" (get-health avatar)) port avatar))
+	())
     (look-around-web avatar port)
     (tick-web! (get-clock) port)))
 

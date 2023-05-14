@@ -434,9 +434,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 		(add-log actor thing))
 	      message)
     (add-log actor "<br/>"))
-  (add-log actor "<br/>")
-  
-  (display (get-log actor)))
+  (add-log actor "<br/>"))
 
 
 ;;; Clock

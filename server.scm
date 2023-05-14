@@ -152,7 +152,7 @@
 	(else (display "function not found"))))))
 
 (define (run port)
-  (let ((socket (open-tcp-server-socket port)))
+  (let ((socket (open-tcp-server-socket port (host-address-any))))
     (set! connection socket)
     (accept-loop socket)))
 

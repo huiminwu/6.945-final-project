@@ -26,11 +26,13 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define the-clock)
 (define all-places)
 (define heaven)
+(define medical-center)
 (define all-people)
 (define all-avatars '())
 
 (define (start-web-world)
   (set! the-clock (make-clock))
+  (set! medical-center (create-place 'medical-center))
   (set! all-places (create-mit))
   (set! heaven (create-place 'heaven))
   (set! all-people (create-people all-places))
@@ -70,6 +72,9 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 
 (define (get-heaven)
   heaven)
+
+(define (get-medical-center)
+  medical-center)
 
 (define (get-clock)
   the-clock)
@@ -301,6 +306,8 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
     (can-go-both-ways student-street 'in 'out 32-123)
     (can-go-both-ways student-street 'up 'down 32G)
     (can-go-both-ways student-street 'skew 'down 32D)
+    (can-go-both-ways (get-medical-center) 'west 'east bldg-54)
+    (can-go-both-ways (get-medical-center) 'east 'west bldg-54)
 
     ; Add line-of-sight into the mix
     (can-see bldg-54 32G)
@@ -333,7 +340,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
           infinite bldg-26 cp32
           tunnel 32-123 32D 32G
           student-street bldg-54 the-dot
-          dorm-row)))
+          dorm-row (get-medical-center))))
 
 (define (create-people places)
   (append (create-students places)
