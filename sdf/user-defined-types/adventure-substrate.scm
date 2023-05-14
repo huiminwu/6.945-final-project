@@ -418,17 +418,25 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define-generic-procedure-handler send-message-web!
   (match-args message? port? (lambda (x) #t))
   (lambda (message client actor)
-    (if (avatar? actor)
+    #|(if (avatar? actor)
 	(begin
-	  (add-log actor "<br>")
 	  (for-each (lambda (thing)
 		      (add-log actor thing))
 		    message)
-	  ))
-
+	  (add-log actor "<br>")
+	))|#
     (display-message message client)
     (display-message (list "<br>") client)))
 
+(define (add-to-log message actor)
+  (begin
+    (for-each (lambda (thing)
+		(add-log actor thing))
+	      message)
+    (add-log actor "<br/>"))
+  (add-log actor "<br/>")
+  
+  (display (get-log actor)))
 
 
 ;;; Clock

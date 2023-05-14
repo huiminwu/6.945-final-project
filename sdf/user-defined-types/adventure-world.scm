@@ -40,12 +40,19 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (if (false? (find-object-by-name my-name all-avatars))
       (let ((avatar-obj (create-avatar my-name (random-choice all-places))))
 	(set! all-avatars (append! all-avatars (list avatar-obj)))
+	(display-message (list "<h4> Output: </h4>") client)
 	(tell-web! (list "Welcome to MIT" my-name "\n") client avatar-obj)
 	(whats-here-web client my-name))
-      (tell-web! (list "This avatar already exists. Please try again.") client avatar-obj)))
+      
+      (tell-web! (list "This avatar already exists. Please go back to the main page and try again.") client avatar-obj)))
  
 (define (avatar-exists name)
   (not (false? (find-object-by-name name all-avatars))))
+
+(define (load-log name client)
+  (let ((my-avatar (find-object-by-name name all-avatars)))
+    (display-message (reverse (get-log my-avatar)) client)))
+   
 
 #|
 (define (start-web-adventure my-name client)
@@ -82,7 +89,9 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 
 (define (go-web direction name client)
   (let ((my-avatar (find-object-by-name name all-avatars)))
-    (tell-web! (reverse (get-log my-avatar)) client my-avatar)
+    (display-message (reverse (get-log my-avatar)) client)
+    (display-message (list "<h4> Output: </h4>") client)
+    
     (let ((exit
 	   (find-exit-in-direction direction
 				   (get-location my-avatar))))
@@ -103,7 +112,9 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define (take-thing-web name avatar-name client)
   (let ((thing (find-thing-web name (here avatar-name) avatar-name client))
 	(my-avatar (find-object-by-name avatar-name all-avatars)))
-    (tell-web! (reverse (get-log my-avatar)) client my-avatar)
+    (display-message (reverse (get-log my-avatar)) client)
+    (display-message (list "<h4> Output: </h4>") client)
+    
     (if thing
         (take-thing-web! thing my-avatar client)))
   'done)
@@ -118,7 +129,9 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define (drop-thing-web name avatar-name client)
   (let* ((my-avatar (find-object-by-name avatar-name all-avatars))
 	 (thing (find-thing-web name my-avatar avatar-name client)))
-    (tell-web! (reverse (get-log my-avatar)) client my-avatar)
+    (display-message (reverse (get-log my-avatar)) client)
+    (display-message (list "<h4> Output: </h4>") client)
+    
     (if thing
         (drop-thing-web! thing my-avatar client)))
   'done)
@@ -129,7 +142,9 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
          (if (default-object? person-name)
              my-avatar
              (find-person-web person-name avatar-name client))))
-    (tell-web! (reverse (get-log my-avatar)) client my-avatar)
+    (display-message (reverse (get-log my-avatar)) client)
+    (display-message (list "<h4> Output: </h4>") client)
+    
     (if person
         (tell-web! (let ((referent (local-possessive person avatar-name))
 			 (things (get-things person)))
@@ -155,8 +170,11 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 
 (define (say-web avatar-name client . message)
   (let ((my-avatar (find-object-by-name avatar-name all-avatars)))
-    (tell-web! (reverse (get-log my-avatar)) client my-avatar)
-    (say-web! my-avatar message client))
+    (display-message (reverse (get-log my-avatar)) client)
+    (display-message (list "<h4> Output: </h4>") client)
+    
+    
+    (say-web! my-avatar (car message) client))
   'done)
 
 
@@ -169,6 +187,14 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
       ((not (n:< i ticks)))
     (tick! (get-clock)))
   'done)
+
+(define (display-health avatar-name client)
+  (let ((my-avatar (find-object-by-name avatar-name all-avatars)))
+    (display-message (reverse (get-log my-avatar)) client)
+    (display-message (list "<h4> Output: </h4>") client)
+    (tell-web! (list "Your health is:" (get-health my-avatar)) client my-avatar))
+  'done)
+    
 
 ;;; Support for UI
 
