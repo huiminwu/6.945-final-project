@@ -96,7 +96,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 
 (define (go-web direction name client)
   (let ((my-avatar (find-object-by-name name all-avatars)))
-    (display-message (reverse (get-log my-avatar)) client)
+    (load-log name client)
     (display-message (list "<h4> Output: </h4>") client)
     
     (let ((exit
@@ -119,7 +119,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define (take-thing-web name avatar-name client)
   (let ((thing (find-thing-web name (here avatar-name) avatar-name client))
 	(my-avatar (find-object-by-name avatar-name all-avatars)))
-    (display-message (reverse (get-log my-avatar)) client)
+    (load-log name client)
     (display-message (list "<h4> Output: </h4>") client)
     
     (if thing
@@ -136,7 +136,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define (drop-thing-web name avatar-name client)
   (let* ((my-avatar (find-object-by-name avatar-name all-avatars))
 	 (thing (find-thing-web name my-avatar avatar-name client)))
-    (display-message (reverse (get-log my-avatar)) client)
+    (load-log name client)
     (display-message (list "<h4> Output: </h4>") client)
     
     (if thing
@@ -149,7 +149,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
          (if (default-object? person-name)
              my-avatar
              (find-person-web person-name avatar-name client))))
-    (display-message (reverse (get-log my-avatar)) client)
+    (load-log name client)
     (display-message (list "<h4> Output: </h4>") client)
     
     (if person
@@ -177,7 +177,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 
 (define (say-web avatar-name client . message)
   (let ((my-avatar (find-object-by-name avatar-name all-avatars)))
-    (display-message (reverse (get-log my-avatar)) client)
+    (load-log name client)
     (display-message (list "<h4> Output: </h4>") client)
     
     
@@ -197,7 +197,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 
 (define (display-health avatar-name client)
   (let ((my-avatar (find-object-by-name avatar-name all-avatars)))
-    (display-message (reverse (get-log my-avatar)) client)
+    (load-log name client)
     (display-message (list "<h4> Output: </h4>") client)
     (tell-web! (list "Your health is:" (get-health my-avatar)) client my-avatar))
   'done)
@@ -205,7 +205,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define (fight avatar-name troll-name client)
   (let ((my-avatar (find-object-by-name avatar-name all-avatars))
 	(troll-obj (find-object-by-name troll-name all-people)))
-    (display-message (reverse (get-log my-avatar)) client)
+    (load-log name client)
     (display-message (list "<h4> Output: </h4>") client)
     (if (false? troll-obj)
 	(display-message (list "Troll does not exist") client)
