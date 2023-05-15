@@ -289,6 +289,17 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (if (< (get-health person) 1)
       (die! person)))
 
+(define (fight! person client troll)
+  (let* ((troll-rand-num (/ (get-full-health) 3))
+	 (damage-dealt (* troll-rand-num (random-number 3))))
+    (set-health! troll (- (get-health troll) damage-dealt))
+    (tell-web! (list "You dealt" damage-dealt "to" (get-name troll)) client troll)
+    (tell-web! (list (get-name troll) "has"
+			   (get-health troll) "hits remaining") client troll)
+    (if (< (get-health troll) 1)
+	(die-troll troll client))
+    (tick-web! (get-clock) client)))
+
 (define (suffer-web! hits person client)
   (guarantee n:exact-positive-integer? hits)
   (say-web! person (list "Ouch!" hits "hits is more than I want!") client)
@@ -485,6 +496,13 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 			 client troll)
 	      (suffer-web! (* victim-rand-num (random-number 3)) victim client))))))
 			 
+(define (die-troll troll client)
+  (tell-web! (list (get-name troll) "is now in heaven.") client troll)
+  (move-web! troll (get-heaven) troll client)
+  (if (every (lambda (x) (eqv? (get-heaven) (get-location x)))
+	     all-trolls)
+      (tell-web! (list "Congrats! You have won the adventure. All the trolls are in heaven. You may now roam happily ever after...") client troll)))
+
 
 (define-clock-handler troll? eat-people!)
 (define-clock-handler-web troll? port? eat-people-web!)
@@ -595,18 +613,18 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 	  (add-to-log (cons "You can see:" vistas) avatar))))
   (tell-web! (let ((exits (exits-here avatar)))
 	       (if (n:pair? exits)
-	       (cons "You can exit:"
+		   (cons "You can exit:"
 		     (map get-direction exits))
-	       ("There are no exits..."
-		"you are dead and gone to heaven!")))
+		   '("There are no exits..."
+		     "you are dead and gone to heaven!")))
 	     client
 	     avatar)
   (add-to-log (let ((exits (exits-here avatar)))
 	       (if (n:pair? exits)
-	       (cons "You can exit:"
-		     (map get-direction exits))
-	       ("There are no exits..."
-		"you are dead and gone to heaven!")))
+		   (cons "You can exit:"
+			 (map get-direction exits))
+		   '("There are no exits..."
+		     "you are dead and gone to heaven!")))
 	     avatar))
 
 ;;; Motion

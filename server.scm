@@ -149,6 +149,10 @@
 	((string=? keyword-function "display-health")
 	 (let* ((display-health-index (string-search-forward "display-health" post-body)))
 	   (display-health avatar-name client)))
+	((string=? keyword-function "fight")
+	 (let* ((fight-index (string-search-forward "fight=" post-body))
+		(troll-name (string->symbol (substring post-body (+ fight-index 6)))))
+	   (fight avatar-name troll-name client)))
 	(else (display "function not found"))))))
 
 (define (run port)

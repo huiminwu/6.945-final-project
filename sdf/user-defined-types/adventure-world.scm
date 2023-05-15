@@ -28,6 +28,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define heaven)
 (define medical-center)
 (define all-people)
+(define all-trolls)
 (define all-avatars '())
 
 (define (start-web-world)
@@ -35,6 +36,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (set! medical-center (create-place 'medical-center))
   (set! all-places (create-mit))
   (set! heaven (create-place 'heaven))
+  (set! all-trolls (create-trolls all-places))
   (set! all-people (create-people all-places))
   (set! all-avatars '()))
 
@@ -199,6 +201,18 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
     (display-message (list "<h4> Output: </h4>") client)
     (tell-web! (list "Your health is:" (get-health my-avatar)) client my-avatar))
   'done)
+
+(define (fight avatar-name troll-name client)
+  (let ((my-avatar (find-object-by-name avatar-name all-avatars))
+	(troll-obj (find-object-by-name troll-name all-people)))
+    (display-message (reverse (get-log my-avatar)) client)
+    (display-message (list "<h4> Output: </h4>") client)
+    (if (false? troll-obj)
+	(display-message (list "Troll does not exist") client)
+	(if (eqv? (get-location troll-obj) (get-location my-avatar))
+	    (fight! my-avatar client troll-obj)
+	    (display-message (list "Troll" troll-name "is not here") client))))
+  'done)
     
 
 ;;; Support for UI
@@ -307,8 +321,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
     (can-go-both-ways student-street 'up 'down 32G)
     (can-go-both-ways student-street 'skew 'down 32D)
     (can-go-both-ways (get-medical-center) 'west 'east bldg-54)
-    (can-go-both-ways (get-medical-center) 'east 'west bldg-54)
-
+    
     ; Add line-of-sight into the mix
     (can-see bldg-54 32G)
     (can-see bldg-54 32D)
@@ -347,7 +360,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
           ;;(create-profs places)
           ;;(create-president places)
           (create-house-masters places)
-          (create-trolls places)))
+          all-trolls))
 
 (define (create-students places)
   (map (lambda (name)

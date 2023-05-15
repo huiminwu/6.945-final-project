@@ -30,11 +30,15 @@
     h3 {
 	margin: 0px 0px 5px 0px;
     }
+    .flex-container {
+	display:flex;
+    }
   </style>
   </head>
   <body>
     <h1> Your Adventure </h1>
-    <div class="actions">
+    <div class="flex-container">
+    <div class="flex-child actions">
       <h3> Actions: </h3>
       <form method="post">
 	<button type="submit" name="look-in-bag" value=""> Look In My Bag </button>
@@ -84,6 +88,16 @@
 	<input type="text" name="look-in-bag">
 	<input type="submit" value="Look In Their Bag">
       </form>
+
+      <form method="post">
+	<label for="fight"> Fight: </label>
+	<input type="text" name="fight">
+	<input type="submit">
+      </form>
+    </div>
+    <div class="flex-child">
+      <img src="https://i.imgur.com/gr03QQD.jpg" width="680">
+    </div>
     </div>
     <h4> Log: </h4>
   </body>
