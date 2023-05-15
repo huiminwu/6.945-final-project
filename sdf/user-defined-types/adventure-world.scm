@@ -195,6 +195,15 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
     (tick! (get-clock)))
   'done)
 
+(define (hangout-web avatar-name ticks client)
+  (let ((my-avatar (find-object-by-name avatar-name all-avatars)))
+    (display-message (reverse (get-log my-avatar)) client)
+    (display-message (list "<h4> Output: </h4>") client)
+    (do ((i 0 (n:+ i 1)))
+	((not (n:< i ticks)))
+      (tick-web! (get-clock) client)))
+  'done)
+
 (define (display-health avatar-name client)
   (let ((my-avatar (find-object-by-name avatar-name all-avatars)))
     (load-log name client)

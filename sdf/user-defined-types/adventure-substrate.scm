@@ -463,7 +463,9 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 
 (define (tick-web! clock client)
   (set-current-time! clock (n:+ (current-time clock) 1))
-  (for-each (lambda (thing) (clock-tick-web! thing client))
+  (for-each (lambda (thing)
+	      (clock-tick-web! thing client)
+	      (clock-tick! thing))
 	    (clock-things clock)))
 
 (define clock-tick!

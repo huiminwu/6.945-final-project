@@ -121,6 +121,12 @@
 	  (go-web (string->symbol direction)
 		  avatar-name
 		  client)))
+       ((string=? keyword-function "hangout")
+	(let ((hangout-index (string-search-forward "hangout=" post-body)))
+	  (hangout-web avatar-name
+		       (string->number (substring post-body (+ hangout-index 8)))
+		       client)))
+						 
 	((string=? keyword-function "take-thing")
 	 (let ((take-thing-index (string-search-forward "take-thing=" post-body)))
 	   (take-thing-web (string->symbol (substring post-body (+ take-thing-index 11)))
