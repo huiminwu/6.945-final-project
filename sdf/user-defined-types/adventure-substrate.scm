@@ -332,6 +332,13 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (if debug-output
       (send-message! message debug-output)))
 
+(define (narrate-web! message person-or-place client)
+  (send-message-web! message
+		     client
+		     (if (person? person-or-place)
+			 (get-location person-or-place)
+			 person-or-place)))
+			       
 (define (tell! message person)
   (send-message! message person)
   (if debug-output
@@ -464,8 +471,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define (tick-web! clock client)
   (set-current-time! clock (n:+ (current-time clock) 1))
   (for-each (lambda (thing)
-	      (clock-tick-web! thing client)
-	      (clock-tick! thing))
+	      (clock-tick-web! thing client))
 	    (clock-things clock)))
 
 (define clock-tick!
@@ -488,6 +494,6 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (define-generic-procedure-handler clock-tick-web!
     (match-args type1 type2)
     (lambda (super object client)
-      (super object)
+      (super object client)
       (action object client))))
   

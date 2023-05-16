@@ -30,6 +30,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define all-people)
 (define all-trolls)
 (define all-avatars '())
+(define my-avatar)
 
 (define (start-web-world)
   (set! the-clock (make-clock))
@@ -46,7 +47,8 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 	(set! all-avatars (append! all-avatars (list avatar-obj)))
 	(display-message (list "<h4> Output: </h4>") client)
 	(tell-web! (list "Welcome to MIT" my-name "\n") client avatar-obj)
-	(whats-here-web client my-name))
+	(whats-here-web client my-name)
+	(set! my-avatar avatar-obj))
       
       (tell-web! (list "This avatar already exists. Please go back to the main page and try again.") client avatar-obj)))
  

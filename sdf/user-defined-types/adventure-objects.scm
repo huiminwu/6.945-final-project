@@ -191,7 +191,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
     (constant-generic-procedure-handler #f)))
 
 (define enter-place-web!
-  (chaining-generic-procedure 'enter-place-web! 1
+  (chaining-generic-procedure 'enter-place-web! 2
     (constant-generic-procedure-handler #f)))
 
 (define leave-place!
@@ -250,16 +250,16 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
             person)))))
 
 (define-generic-procedure-handler enter-place-web!
-  (match-args person?)
-  (lambda (super person)
-    (super person)
-    (tell-web! (list person "enters" (get-location person))
-               person
-	       person)
+  (match-args person? port?)
+  (lambda (super person port)
+    (super person port)
+    (narrate-web! (list person "enters" (get-location person))
+              person
+	      port)
     (let ((people (people-here person)))
       (if (n:pair? people)
           (tell-web! (append (list person "says:") (cons "Hi" people))
-		     person
+		     port
 		     person)))))
 
 (define (when-alive callback)
@@ -320,9 +320,10 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (for-each (lambda (thing)
               (drop-thing-web! thing person client))
             (get-things person))
-  (announce-web!
+  (tell-web!
    '("An earth-shattering, soul-piercing scream is heard...")
-   client)
+   client
+   person)
   (set-health! person 0)
   (move-web! person (get-heaven) person client))
 
@@ -388,7 +389,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
     (unregister-with-clock! agent (get-clock))
     (super agent)))
 
-(define (move-and-take-stuff! agent)
+(define (move-and-take-stuff-web! agent client)
   (if (flip-coin (get-restlessness agent))
       (move-somewhere! agent))
   (if (flip-coin (get-acquisitiveness agent))
@@ -406,7 +407,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
     (if thing
         (take-thing! thing agent))))
 
-(define-clock-handler autonomous-agent? move-and-take-stuff!)
+(define-clock-handler-web autonomous-agent? port? move-and-take-stuff-web!)
 
 ;;; Students
 
@@ -433,29 +434,31 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define get-irritability
   (property-getter house-master:irritability house-master?))
 
-(define (irritate-students! master)
+(define (irritate-students-web! master client)
   (let ((students (filter student? (people-here master))))
     (if (flip-coin (get-irritability master))
         (if (n:pair? students)
             (begin
-              (say! master
+              (say-web! master
                     '("What are you doing still up?"
-                      "Everyone back to their rooms!"))
+                      "Everyone back to their rooms!") client)
               (for-each (lambda (student)
-                          (narrate! (list student "goes home to"
+                          (narrate-web! (list student "goes home to"
                                           (get-origin student))
-                                    student)
+                                    student client)
                           (move! student
                                  (get-origin student)
                                  student))
                         students))
-            (say! master
-                  '("Grrr... When I catch those students...")))
+            (say-web! master
+                      '("Grrr... When I catch those students...")
+		      client))
         (if (n:pair? students)
-            (say! master
-                  '("I'll let you off this once..."))))))
+            (say-web! master
+                      '("I'll let you off this once...")
+		      client)))))
 
-(define-clock-handler house-master? irritate-students!)
+(define-clock-handler-web house-master? port? irritate-students-web!)
 
 ;;; Trolls
 
@@ -488,12 +491,14 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
   (if (flip-coin (get-hunger troll))
       (let ((people (people-here troll)))
 	(if (n:null? people)
-	    (tell-web! (list (possessive troll) "belly rumbles")
-		       client troll)
+	    (if (equal? (get-location troll) (get-location my-avatar))
+			 (narrate! (list (possessive troll) "belly rumbles")
+		       troll))
 	    (let ((victim (random-choice people))
 		  (victim-rand-num (/ (get-full-health) 3)))
-	      (tell-web! (list troll "takes a bite out of" victim)
-			 client troll)
+	      (if (equal? (get-location troll) (get-location my-avatar))
+		  (narrate-web! (list troll "takes a bite out of" victim)
+			 troll client))
 	      (suffer-web! (* victim-rand-num (random-number 3)) victim client))))))
 			 
 (define (die-troll troll client)
@@ -553,7 +558,7 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 (define-generic-procedure-handler enter-place-web!
   (match-args avatar? port?)
   (lambda (super avatar port)
-    (super avatar)
+    (super avatar port)
     (if (and (eqv? (get-location avatar) (get-medical-center))
 	     (< (get-health avatar) (get-full-health)))
 	(begin
@@ -905,10 +910,10 @@ along with SDF.  If not, see <https://www.gnu.org/licenses/>.
 			port
 			actor))
             ((eqv? person actor)
-             (tell-web! (list person "leaves via the"
+             (narrate-web! (list person "leaves via the"
                              (get-direction exit) "exit")
-			port
-			actor)
+			   from
+			   port)
              (move-internal-web! person from to port actor))
             (else
              (tell-web! (list "You can't force"
